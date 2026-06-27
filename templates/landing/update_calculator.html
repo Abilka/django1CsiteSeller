@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Калькулятор обновлений 1С — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Определите последовательность установки промежуточных обновлений конфигураций 1С:Предприятие 8.{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='calculator' %}
+
+<main class="calc-page">
+    <section class="section calc-hero">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Обновление 1С</span>
+                <h1 class="section__title">Калькулятор обновлений 1С</h1>
+                <p class="section__desc">
+                    Определите состав и последовательность установки промежуточных обновлений
+                    типовых конфигураций 1С:Предприятие 8 до актуального релиза.
+                   
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt">
+        <div class="container calc-layout">
+            <form class="calc-form" method="post" id="calc-form">
+                {% csrf_token %}
+                <div class="calc-form__grid">
+                    <div class="form-field">
+                        <label class="form-label" for="configuration">Конфигурация</label>
+                        <select class="form-select" name="configuration" id="configuration" required>
+                            <option value="">— Выберите конфигурацию —</option>
+                            {% for config in configurations %}
+                            <option value="{{ config.slug }}"
+                                {% if selected_config and selected_config.slug == config.slug %}selected{% endif %}>
+                                {{ config.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="current_version">
+                            Текущий релиз
+                            <a class="form-label__link" href="#how-to-find-release">Как узнать номер релиза?</a>
+                        </label>
+                        <select class="form-select" name="current_version" id="current_version" required
+                            {% if not selected_config %}disabled{% endif %}>
+                            <option value="">— Выберите релиз —</option>
+                            {% for version in versions %}
+                            <option value="{{ version }}"
+                                {% if selected_version == version %}selected{% endif %}>
+                                {{ version }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--primary">Рассчитать цепочку обновлений</button>
+            </form>
+
+            {% if error %}
+            <div class="calc-result calc-result--error" role="alert">
+                <strong>Не удалось построить цепочку</strong>
+                <p>{{ error }}</p>
+            </div>
+            {% endif %}
+
+            {% if result %}
+            <div class="calc-result calc-result--success">
+                {% if result.is_up_to_date %}
+                <strong>Конфигурация уже актуальна</strong>
+                <p>Релиз <code>{{ result.current_version }}</code> — последний доступный для «{{ result.configuration_name }}».</p>
+                {% if result.min_platform %}
+                <p class="calc-result__note">Минимальная версия платформы: <strong>{{ result.min_platform }}</strong></p>
+                {% endif %}
+                {% else %}
+                <strong>Цепочка обновлений для {{ result.configuration_name }}</strong>
+                <p class="calc-result__intro">
+                    Для приведения конфигурации с релиза <code>{{ result.current_version }}</code>
+                    до актуального <code>{{ result.latest_version }}</code> установите ключевые обновления:
+                </p>
+                <ol class="calc-chain">
+                    {% for version in result.chain %}
+                    <li>обновление <strong>{{ version }}</strong></li>
+                    {% endfor %}
+                </ol>
+                <div class="calc-pricing">
+                    <div class="calc-pricing__row">
+                        <span>Релизов к установке</span>
+                        <strong>{{ result.steps_count }}</strong>
+                    </div>
+                    <div class="calc-pricing__row">
+                        <span>Трудозатраты</span>
+                        <strong>{{ result.estimated_hours }} ч</strong>
+                    </div>
+                    <div class="calc-pricing__row">
+                        <span>Ставка</span>
+                        <strong>{{ result.hourly_rate|intcomma }} ₽/ч</strong>
+                    </div>
+                    <div class="calc-pricing__row calc-pricing__row--total">
+                        <span>Ориентировочная стоимость</span>
+                        <strong>~{{ result.estimated_price|intcomma }} ₽</strong>
+                    </div>
+                    <p class="calc-pricing__formula">
+                        {{ result.steps_count }} × {{ result.hours_per_release }} ч × {{ result.hourly_rate|intcomma }} ₽
+                    </p>
+                </div>
+                {% if result.min_platform %}
+                <p class="calc-result__note">Версия платформы должна быть не ниже <strong>{{ result.min_platform }}</strong></p>
+                {% endif %}
+                <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Заказать обновление</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="section" id="how-to-find-release">
+        <div class="container calc-layout">
+            {% include 'landing/includes/release_version_help.html' %}
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--simple">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ SITE_NAME }} · <a href="{% url 'landing:index' %}">На главную</a></p>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.UPDATE_CALC = {
+        apiBase: "/api/v1/configurations/",
+    };
+</script>
+<script src="{% static 'js/update_calculator.js' %}"></script>
+{% endblock %}

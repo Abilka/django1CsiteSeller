@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block body %}
+{% include 'includes/site_header.html' %}
+
+<main class="calc-page legal-page">
+    <section class="section">
+        <div class="container calc-layout">
+            <article class="legal-doc">
+                {% block legal_content %}{% endblock %}
+            </article>
+            <nav class="legal-doc__nav" aria-label="Юридические документы">
+                <a href="{% url 'landing:user_agreement' %}">Пользовательское соглашение</a>
+                <span aria-hidden="true">·</span>
+                <a href="{% url 'landing:privacy_policy' %}">Политика конфиденциальности</a>
+                {% if YANDEX_METRICA_ID or GOOGLE_ANALYTICS_ID %}
+                <span aria-hidden="true">·</span>
+                <a href="#" data-cookie-settings>Настройки cookie</a>
+                {% endif %}
+            </nav>
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--simple">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ SITE_NAME }} · <a href="{% url 'landing:index' %}">На главную</a></p>
+    </div>
+</footer>
+{% endblock %}

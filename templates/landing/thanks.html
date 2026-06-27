@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Спасибо за заявку — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Ваша заявка принята. Мы свяжемся с вами в ближайшее время.{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block body %}
+<section class="thanks">
+    <div class="thanks__card">
+        <div class="thanks__icon">✓</div>
+        <h1>Заявка отправлена!</h1>
+        <p>Спасибо за обращение. Мы изучим задачу и свяжемся с вами в течение рабочего дня, чтобы назвать стоимость и сроки работ.</p>
+        <a href="{% url 'landing:index' %}" class="btn btn--primary btn--lg">Вернуться на главную</a>
+    </div>
+</section>
+{% endblock %}

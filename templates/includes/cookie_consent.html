@@ -1,0 +1,45 @@
+{% if YANDEX_METRICA_ID or GOOGLE_ANALYTICS_ID %}
+<div
+    id="cookie-consent-root"
+    data-yandex-id="{{ YANDEX_METRICA_ID }}"
+    data-google-id="{{ GOOGLE_ANALYTICS_ID }}"
+>
+    <div
+        id="cookie-consent-banner"
+        class="cookie-consent"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cookie-consent-title"
+        aria-describedby="cookie-consent-desc"
+        hidden
+    >
+        <div class="cookie-consent__inner container">
+            <div class="cookie-consent__content">
+                <p id="cookie-consent-title" class="cookie-consent__title">Использование файлов cookie</p>
+                <p id="cookie-consent-desc" class="cookie-consent__text">
+                    Мы используем обязательные cookie для работы сайта (сессия, защита форм)
+                    и, только с вашего согласия, аналитические cookie
+                    {% if YANDEX_METRICA_ID and GOOGLE_ANALYTICS_ID %}
+                    сервисов <strong>Яндекс.Метрика</strong> и <strong>Google Analytics</strong>
+                    {% elif YANDEX_METRICA_ID %}
+                    сервиса <strong>Яндекс.Метрика</strong>
+                    {% else %}
+                    сервиса <strong>Google Analytics</strong>
+                    {% endif %}
+                    для сбора статистики посещений (IP-адрес, данные об устройстве и действиях на сайте).
+                    Отказ не ограничивает доступ к сайту. Подробнее —
+                    <a href="{% url 'landing:privacy_policy' %}#cookies">Политика конфиденциальности</a>.
+                </p>
+            </div>
+            <div class="cookie-consent__actions">
+                <button type="button" class="btn btn--outline btn--sm" id="cookie-consent-reject">
+                    Отклонить
+                </button>
+                <button type="button" class="btn btn--primary btn--sm" id="cookie-consent-accept">
+                    Принять аналитические cookie
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

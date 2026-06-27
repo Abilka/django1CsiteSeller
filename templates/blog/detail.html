@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.seo_title }} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ post.seo_description }}{% endblock %}
+
+{% block extra_head %}
+{% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{ post.seo_title }}">
+<meta property="og:description" content="{{ post.seo_description }}">
+<meta property="og:locale" content="ru_RU">
+{% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
+{% if post.cover_image %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ post.cover_image.url }}">
+{% endif %}
+{% if post.published_at %}
+<meta property="article:published_time" content="{{ post.published_at|date:'c' }}">
+{% endif %}
+<meta property="article:modified_time" content="{{ post.updated_at|date:'c' }}">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ post.title|escapejs }}",
+  "description": "{{ post.seo_description|escapejs }}",
+  "datePublished": "{{ post.published_at|date:'c' }}",
+  "dateModified": "{{ post.updated_at|date:'c' }}",
+  "author": {
+    "@type": "Organization",
+    "name": "{{ SITE_NAME|escapejs }}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "{{ SITE_NAME|escapejs }}"
+  }{% if canonical_url %},
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "{{ canonical_url }}"
+  }{% endif %}{% if post.cover_image %},
+  "image": "{{ request.scheme }}://{{ request.get_host }}{{ post.cover_image.url }}"{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='blog' %}
+
+<main class="blog-page">
+    <article class="section blog-article">
+        <div class="container blog-article__container">
+            <nav class="blog-breadcrumb" aria-label="Хлебные крошки">
+                <a href="{% url 'landing:index' %}">Главная</a>
+                <span aria-hidden="true">/</span>
+                <a href="{% url 'blog:list' %}">Блог</a>
+                <span aria-hidden="true">/</span>
+                <span>{{ post.title }}</span>
+            </nav>
+
+            <header class="blog-article__header">
+                {% if post.published_at %}
+                <time class="blog-article__date" datetime="{{ post.published_at|date:'c' }}">
+                    {{ post.published_at|date:'d E Y' }}
+                </time>
+                {% endif %}
+                <h1 class="blog-article__title">{{ post.title }}</h1>
+                {% if post.excerpt %}
+                <p class="blog-article__lead">{{ post.excerpt }}</p>
+                {% endif %}
+            </header>
+
+            {% if post.cover_image %}
+            <figure class="blog-article__cover">
+                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+            </figure>
+            {% endif %}
+
+            <div class="blog-article__content">
+                {{ post.body|linebreaks }}
+            </div>
+
+            <footer class="blog-article__footer">
+                <a href="{% url 'blog:list' %}" class="btn btn--outline">← Все статьи</a>
+                <a href="{% url 'landing:index' %}#contact" class="btn btn--primary">Получить консультацию</a>
+            </footer>
+        </div>
+    </article>
+</main>
+
+<footer class="footer footer--compact">
+    <div class="container footer__inner">
+        <p class="footer__copy">© {% now 'Y' %} {{ SITE_NAME }}</p>
+        <a href="{% url 'landing:index' %}" class="footer__link">На главную</a>
+        {% if YANDEX_METRICA_ID or GOOGLE_ANALYTICS_ID %}
+        <a href="#" class="footer__link" data-cookie-settings>Настройки cookie</a>
+        {% endif %}
+    </div>
+</footer>
+{% endblock %}

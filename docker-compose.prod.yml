@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/data/db.sqlite3
+      MEDIA_ROOT: /app/media
+    volumes:
+      - sqlite_data:/app/data
+      - media_data:/app/media
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlite_data:
+  media_data:

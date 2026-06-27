@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Блог о 1С — статьи и инструкции | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Полезные статьи о настройке, доработке и обновлении 1С:Предприятие 8. Инструкции, советы и разбор типовых задач.{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='blog' %}
+
+<main class="blog-page">
+    <section class="section blog-hero">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Блог</span>
+                <h1 class="section__title">Статьи о 1С</h1>
+                <p class="section__desc">
+                    Инструкции, советы и разборы типовых задач по настройке, доработке и обновлению 1С:Предприятие 8.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt">
+        <div class="container">
+            {% if posts %}
+            <div class="blog-grid">
+                {% for post in posts %}
+                <article class="blog-card">
+                    <a href="{{ post.get_absolute_url }}" class="blog-card__link">
+                        {% if post.cover_image %}
+                        <div class="blog-card__image">
+                            <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="blog-card__body">
+                            {% if post.published_at %}
+                            <time class="blog-card__date" datetime="{{ post.published_at|date:'c' }}">
+                                {{ post.published_at|date:'d E Y' }}
+                            </time>
+                            {% endif %}
+                            <h2 class="blog-card__title">{{ post.title }}</h2>
+                            {% if post.excerpt %}
+                            <p class="blog-card__excerpt">{{ post.excerpt|truncatewords:30 }}</p>
+                            {% endif %}
+                            <span class="blog-card__more">Читать статью →</span>
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
+
+            {% if page.has_other_pages %}
+            <nav class="blog-pagination" aria-label="Навигация по страницам">
+                {% if page.has_previous %}
+                <a class="btn btn--outline btn--sm" href="?page={{ page.previous_page_number }}">← Назад</a>
+                {% endif %}
+                <span class="blog-pagination__info">Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
+                {% if page.has_next %}
+                <a class="btn btn--outline btn--sm" href="?page={{ page.next_page_number }}">Вперёд →</a>
+                {% endif %}
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="blog-empty">
+                <p>Скоро здесь появятся полезные статьи о 1С.</p>
+                <a href="{% url 'landing:index' %}#contact" class="btn btn--primary">Задать вопрос специалисту</a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--compact">
+    <div class="container footer__inner">
+        <p class="footer__copy">© {% now 'Y' %} {{ SITE_NAME }}</p>
+        <a href="{% url 'landing:index' %}" class="footer__link">На главную</a>
+        {% if YANDEX_METRICA_ID or GOOGLE_ANALYTICS_ID %}
+        <a href="#" class="footer__link" data-cookie-settings>Настройки cookie</a>
+        {% endif %}
+    </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% load static %}
+{% include 'includes/page_top_anchor.html' %}
+<header class="header">
+    <div class="container header__inner">
+        <a href="{% if request.resolver_match.url_name == 'index' %}#top{% else %}{% url 'landing:index' %}{% endif %}" class="logo">
+            {% include 'includes/site_logo.html' %}
+        </a>
+        <nav class="nav" id="nav">
+            <a href="{% url 'landing:index' %}#services" class="nav__link">Услуги</a>
+            <a href="{% url 'landing:index' %}#pricing" class="nav__link">Цены</a>
+            <a href="{% url 'landing:update_calculator' %}" class="nav__link{% if active_nav == 'calculator' %} nav__link--active{% endif %}">Калькулятор</a>
+            <a href="{% url 'blog:list' %}" class="nav__link{% if active_nav == 'blog' %} nav__link--active{% endif %}">Блог</a>
+            {% if has_team_members %}
+            <a href="{% url 'landing:index' %}#team" class="nav__link">Команда</a>
+            {% endif %}
+            <a href="{% url 'landing:index' %}#process" class="nav__link">Как работаем</a>
+            {% if settings.telegram_contact_url or settings.max_contact_url or settings.contact_email or settings.contact_phone %}
+            <div class="nav__messengers">
+                {% if settings.contact_email %}
+                <a href="mailto:{{ settings.contact_email }}" class="messenger-btn messenger-btn--sm" title="Написать на {{ settings.contact_email }}">
+                    <img src="{% static 'img/email.svg' %}" alt="Email" width="20" height="20">
+                </a>
+                {% endif %}
+                {% if settings.contact_phone %}
+                <a href="tel:{{ settings.contact_phone_tel }}" class="messenger-btn messenger-btn--sm" title="Позвонить: {{ settings.contact_phone }}">
+                    <img src="{% static 'img/phone.svg' %}" alt="Телефон" width="20" height="20">
+                </a>
+                {% endif %}
+                {% if settings.telegram_contact_url %}
+                <a href="{{ settings.telegram_contact_url }}" class="messenger-btn messenger-btn--sm" target="_blank" rel="noopener" title="Написать в Telegram">
+                    <img src="{% static 'img/telegram.svg' %}" alt="Telegram" width="20" height="20">
+                </a>
+                {% endif %}
+                {% if settings.max_contact_url %}
+                <a href="{{ settings.max_contact_url }}" class="messenger-btn messenger-btn--sm" target="_blank" rel="noopener" title="Написать в MAX">
+                    <img src="{% static 'img/max.svg' %}" alt="MAX" width="20" height="20">
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            <a href="{% url 'landing:index' %}#contact" class="nav__link nav__link--cta">Получить оценку</a>
+        </nav>
+        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>

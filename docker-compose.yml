@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/data/db.sqlite3
+      MEDIA_ROOT: /app/media
+    volumes:
+      - sqlite_data:/app/data
+      - media_data:/app/media
+      - ./db.sqlite3:/app/data/db.sqlite3
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
+  media_data:

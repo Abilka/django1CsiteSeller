@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+{% load static humanize landing_extras %}
+
+{% block body %}
+{% include 'includes/site_header.html' %}
+
+<main>
+    <section class="hero">
+        <div class="hero__bg"></div>
+        <div class="container hero__inner">
+            <div class="hero__content">
+                <span class="badge">1С:Предприятие 8.3</span>
+                <h1 class="hero__title">Настраиваем и дорабатываем&nbsp;1С<br><span>без сюрпризов по срокам и бюджету</span></h1>
+                <p class="hero__subtitle">Установка, обновление, исправление ошибок, разработка и интеграции. Называем смету и сроки <strong>до начала</strong> работ.</p>
+                <div class="hero__actions">
+                    <a href="#contact" class="btn btn--primary btn--lg">Бесплатная консультация</a>
+                    <a href="#pricing" class="btn btn--ghost btn--lg">Смотреть цены</a>
+                </div>
+                <ul class="hero__stats">
+                    <li><strong>{{ settings.hourly_rate|intcomma }} ₽</strong> стоимость часа</li>
+                    <li><strong>8.3</strong> типовые и нетиповые</li>
+                    <li><strong>100%</strong> лицензионная политика</li>
+                </ul>
+            </div>
+            <div class="hero__visual">
+                {% if featured_task %}
+                <div class="hero-card">
+                    <div class="hero-card__header">
+                        <span class="dot dot--red"></span>
+                        <span class="dot dot--yellow"></span>
+                        <span class="dot dot--green"></span>
+                    </div>
+                    <div class="hero-card__body">
+                        <p class="hero-card__label">Типовая задача</p>
+                        <p class="hero-card__task">{{ featured_task.title }}</p>
+                        <div class="hero-card__row">
+                            <span>Срок</span>
+                            <strong>{{ featured_task.duration }}</strong>
+                        </div>
+                        <div class="hero-card__row">
+                            <span>Оценка</span>
+                            <strong>~{{ featured_task.price_display|intcomma }} ₽</strong>
+                        </div>
+                        <div class="hero-card__row">
+                            <span>Трудозатраты</span>
+                            <strong>{{ featured_task.estimated_hours }} ч</strong>
+                        </div>
+                        <a href="#contact" class="btn btn--primary btn--sm hero-card__btn">Запросить оценку</a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="hero-card">
+                    <div class="hero-card__header">
+                        <span class="dot dot--red"></span>
+                        <span class="dot dot--yellow"></span>
+                        <span class="dot dot--green"></span>
+                    </div>
+                    <div class="hero-card__body">
+                        <p class="hero-card__label">Типовая задача</p>
+                        <p class="hero-card__task">Обновление УТ 11 + перенос остатков</p>
+                        <div class="hero-card__row">
+                            <span>Срок</span>
+                            <strong>3–5 дней</strong>
+                        </div>
+                        <div class="hero-card__row">
+                            <span>Оценка</span>
+                            <strong>до старта работ</strong>
+                        </div>
+                        <a href="#contact" class="btn btn--primary btn--sm hero-card__btn">Запросить оценку</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt" id="pain">
+        <div class="container">
+            <div class="section__head">
+                <span class="section__tag">Знакомо?</span>
+                <h2 class="section__title">Когда 1С мешает бизнесу, а не помогает</h2>
+            </div>
+            <div class="pain-grid">
+                <article class="pain-card">
+                    <div class="pain-card__icon">🐌</div>
+                    <h3>База тормозит</h3>
+                    <p>Отчёты грузятся минутами, пользователи ждут — теряется время и нервы.</p>
+                </article>
+                <article class="pain-card">
+                    <div class="pain-card__icon">📅</div>
+                    <h3>Месяц не закрывается</h3>
+                    <p>Ошибки в учёте, дубли контрагентов — закрытие периода срывается снова и снова.</p>
+                </article>
+                <article class="pain-card">
+                    <div class="pain-card__icon">🔗</div>
+                    <h3>Нет связи с маркетплейсами</h3>
+                    <p>Ozon, Wildberries, Яндекс Маркет — заказы и остатки ведутся вручную.</p>
+                </article>
+                <article class="pain-card">
+                    <div class="pain-card__icon">⚠️</div>
+                    <h3>Устаревшая версия</h3>
+                    <p>1С не обновляли годами — отчёты не сходятся, новые формы не поддерживаются, а закрыть квартал уже некому.</p>
+                </article>
+            </div>
+            <p class="section__cta-text">Решаем конкретную задачу — <a href="#contact">оставьте заявку</a>, разберёмся вместе.</p>
+        </div>
+    </section>
+
+    <section class="section" id="services">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Чем поможем</span>
+                <h2 class="section__title">Услуги по 1С 8.3</h2>
+                <p class="section__desc">Полный цикл: от установки до интеграции с внешними системами.</p>
+            </div>
+            <div class="services-grid">
+                <article class="service-card" id="service-admin">
+                    <div class="service-card__num">01</div>
+                    <h3 class="service-card__title">Настройка и администрирование</h3>
+                    <ul class="service-card__list">
+                        <li>Установка типовых конфигураций: Бухгалтерия, ЗУП, УНФ, УТ, Розница</li>
+                        <li>Обновление типовых и нетиповых конфигураций</li>
+                        <li>Перенос локальной базы в облако (1С:Fresh, 1С:ГРМ) и веб-доступ (Apache/IIS)</li>
+                        <li>Перенос данных: УТ 10.3 → УТ 11, импорт из Excel</li>
+                        <li>Оптимизация и ускорение работы базы</li>
+                        <li>Настройка резервного копирования</li>
+                    </ul>
+                    <a href="#contact" class="service-card__link" data-service="admin">Запросить оценку →</a>
+                </article>
+                <article class="service-card" id="service-accounting">
+                    <div class="service-card__num">02</div>
+                    <h3 class="service-card__title">Учёт и исправление ошибок</h3>
+                    <ul class="service-card__list">
+                        <li>Поиск и устранение дублей номенклатуры и контрагентов</li>
+                        <li>Свёртка базы данных</li>
+                        <li>Помощь в закрытии месяца — найдём причину, почему период не закрывается</li>
+                        <li>Оперативное исправление ошибок в коде</li>
+                    </ul>
+                    <a href="#contact" class="service-card__link" data-service="accounting">Запросить оценку →</a>
+                </article>
+                <article class="service-card" id="service-development">
+                    <div class="service-card__num">03</div>
+                    <h3 class="service-card__title">Разработка под ваши задачи</h3>
+                    <ul class="service-card__list">
+                        <li>Доработка типовых и нетиповых конфигураций</li>
+                        <li>Расширения, обработки, отчёты, печатные формы</li>
+                        <li>Настройка и доработка обмена данными</li>
+                    </ul>
+                    <a href="#contact" class="service-card__link" data-service="development">Запросить оценку →</a>
+                </article>
+                <article class="service-card" id="service-integration">
+                    <div class="service-card__num">04</div>
+                    <h3 class="service-card__title">Оборудование и интеграции</h3>
+                    <ul class="service-card__list">
+                        <li>Торговое оборудование: сканеры, ККМ, ТСД</li>
+                        <li>Система «Честный ЗНАК» (маркировка)</li>
+                        <li>Интеграция с маркетплейсами: Ozon, Wildberries, Яндекс Маркет</li>
+                        <li>Интеграция с мессенджерами и чат-ботами</li>
+                        <li>Интеграция с ресторанной системой iiko</li>
+                    </ul>
+                    <a href="#contact" class="service-card__link" data-service="integration">Запросить оценку →</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    {% if typical_tasks %}
+    <section class="section section--alt" id="examples">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Примеры расчёта</span>
+                <h2 class="section__title">Типовые задачи и ориентировочная стоимость</h2>
+                <p class="section__desc">Расчёт по ставке <strong>{{ settings.hourly_rate|intcomma }} ₽/час</strong>. Точная смета — после уточнения деталей.</p>
+            </div>
+            <div class="examples-grid">
+                {% for task in typical_tasks %}
+                <article class="example-card">
+                    <h3 class="example-card__title">{{ task.title }}</h3>
+                    {% if task.description %}<p class="example-card__desc">{{ task.description }}</p>{% endif %}
+                    <div class="example-card__calc">
+                        <div class="example-card__row">
+                            <span>Трудозатраты</span>
+                            <strong>{{ task.estimated_hours }} ч</strong>
+                        </div>
+                        <div class="example-card__row">
+                            <span>Ставка</span>
+                            <strong>{{ settings.hourly_rate|intcomma }} ₽/ч</strong>
+                        </div>
+                        <div class="example-card__row example-card__row--total">
+                            <span>Итого</span>
+                            <strong>~{{ task.price_display|intcomma }} ₽</strong>
+                        </div>
+                        <div class="example-card__row">
+                            <span>Срок</span>
+                            <strong>{{ task.duration }}</strong>
+                        </div>
+                    </div>
+                    <a href="#contact" class="btn btn--outline btn--sm btn--block">Заказать похожую задачу</a>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section" id="pricing">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Прайс-лист</span>
+                <h2 class="section__title">Ориентировочные цены на работы</h2>
+                <p class="section__desc">
+                    Базовая ставка: <strong>{{ settings.hourly_rate|intcomma }} ₽/час</strong>.
+                    Итоговая стоимость зависит от конфигурации и объёма — фиксируем до начала работ.
+                </p>
+            </div>
+
+            <div class="rate-banner">
+                <div class="rate-banner__icon">⏱</div>
+                <div>
+                    <strong>Стоимость часа работы специалиста — {{ settings.hourly_rate|intcomma }} ₽</strong>
+                    <p>Применяется для разработки, доработок и нестандартных задач без фиксированного прайса.</p>
+                </div>
+            </div>
+
+            {% if price_by_category %}
+            <div class="pricing-tables">
+                {% for cat_key, cat_label in price_categories %}
+                {% with items=price_by_category|get_item:cat_key %}
+                {% if items %}
+                <div class="pricing-block">
+                    <h3 class="pricing-block__title">{{ cat_label }}</h3>
+                    <div class="pricing-table-wrap">
+                        <table class="pricing-table">
+                            <thead>
+                                <tr>
+                                    <th>Работа</th>
+                                    <th>Часы</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        {{ item.name }}
+                                        {% if item.note %}<span class="pricing-note">{{ item.note }}</span>{% endif %}
+                                    </td>
+                                    <td>{{ item.hours_display }}</td>
+                                    <td><strong>{{ item.price_display }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section__cta-text">Прайс-лист наполняется в админке.</p>
+            {% endif %}
+
+            <p class="pricing-disclaimer">* Указанные цены ориентировочные. Точная смета формируется после анализа вашей базы и требований.</p>
+        </div>
+    </section>
+
+    {% if team_members %}
+    <section class="section section--alt" id="team">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Команда</span>
+                <h2 class="section__title">О нашей команде</h2>
+                <p class="section__desc">Сертифицированные специалисты с опытом в типовых и нетиповых конфигурациях 1С.</p>
+            </div>
+            <div class="team-grid">
+                {% for member in team_members %}
+                <article class="team-card">
+                    <div class="team-card__photo-wrap">
+                        <img src="{{ member.photo.url }}" alt="{{ member.name }}" class="team-card__photo" loading="lazy">
+                    </div>
+                    <div class="team-card__body">
+                        <h3 class="team-card__name">{{ member.name }}</h3>
+                        <p class="team-card__spec">{{ member.specialization }}</p>
+                        {% if member.bio %}<p class="team-card__bio">{{ member.bio }}</p>{% endif %}
+                        {% if member.certificates.all %}
+                        <div class="team-card__certs">
+                            <p class="team-card__certs-title">Сертификаты</p>
+                            <div class="cert-grid">
+                                {% for cert in member.certificates.all %}
+                                <figure class="cert-item">
+                                    <a href="{{ cert.image.url }}" target="_blank" rel="noopener" title="{{ cert.title }}">
+                                        <img src="{{ cert.image.url }}" alt="{{ cert.title }}" loading="lazy">
+                                    </a>
+                                    <figcaption>{{ cert.title }}</figcaption>
+                                </figure>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section section--dark" id="process">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag section__tag--light">Воронка работы</span>
+                <h2 class="section__title section__title--light">Прозрачный процесс от заявки до результата</h2>
+            </div>
+            <div class="funnel">
+                <div class="funnel__step">
+                    <div class="funnel__circle">1</div>
+                    <h3>Заявка</h3>
+                    <p>Описываете задачу: конфигурация, симптомы, желаемые сроки.</p>
+                </div>
+                <div class="funnel__arrow">→</div>
+                <div class="funnel__step funnel__step--highlight">
+                    <div class="funnel__circle">2</div>
+                    <h3>Оценка</h3>
+                    <p><strong>Называем стоимость и сроки до начала работ.</strong> Без скрытых доплат.</p>
+                </div>
+                <div class="funnel__arrow">→</div>
+                <div class="funnel__step">
+                    <div class="funnel__circle">3</div>
+                    <h3>Согласование</h3>
+                    <p>Утверждаете объём, подписываем договор — только после вашего «да».</p>
+                </div>
+                <div class="funnel__arrow">→</div>
+                <div class="funnel__step">
+                    <div class="funnel__circle">4</div>
+                    <h3>Работа и сдача</h3>
+                    <p>Выполняем, тестируем, передаём результат и инструкции.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="trust">
+        <div class="container">
+            <div class="trust-grid">
+                <div class="trust-content">
+                    <span class="section__tag">Надёжность</span>
+                    <h2 class="section__title">Лицензионная политика — без компромиссов</h2>
+                    <p class="trust-text">Мы строго соблюдаем лицензионную политику 1С. Установка и обновление программ производятся <strong>только при наличии у вас действующего договора ИТС</strong>.</p>
+                    <p class="trust-text">Мы <strong>не продаём программное обеспечение</strong> — мы его качественно настраиваем, дорабатываем и сопровождаем.</p>
+                    <ul class="trust-list">
+                        <li>Работаем только с легальными копиями 1С</li>
+                        <li>Фиксируем объём и цену до старта</li>
+                        <li>Конфиденциальность данных клиентов</li>
+                    </ul>
+                </div>
+                <div class="trust-visual">
+                    <div class="trust-badge">
+                        <span class="trust-badge__icon">✓</span>
+                        <div>
+                            <strong>ИТС обязателен</strong>
+                            <p>Для установки и обновления конфигураций</p>
+                        </div>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="trust-badge__icon">⚙</span>
+                        <div>
+                            <strong>Услуги, не ПО</strong>
+                            <p>Настройка, разработка, интеграции</p>
+                        </div>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="trust-badge__icon">📋</span>
+                        <div>
+                            <strong>Смета заранее</strong>
+                            <p>Стоимость и сроки — до начала работ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--contact" id="contact">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <span class="section__tag">Следующий шаг</span>
+                    <h2 class="section__title">Получите оценку задачи бесплатно</h2>
+                    <p class="contact-info__text">Опишите задачу — мы свяжемся с вами, уточним детали и назовём стоимость с длительностью работ до их начала.</p>
+                    <ul class="contact-benefits">
+                        <li>Ответ в течение рабочего дня</li>
+                        <li>Без обязательств после консультации</li>
+                        <li>Конкретная смета, а не «от и до»</li>
+                    </ul>
+
+                    {% if settings.telegram_contact_url or settings.max_contact_url or settings.contact_email or settings.contact_phone %}
+                    <div class="contact-messengers">
+                        <p class="contact-messengers__label">Или напишите нам напрямую:</p>
+                        <div class="contact-messengers__buttons">
+                            {% if settings.contact_email %}
+                            <a href="mailto:{{ settings.contact_email }}" class="messenger-link">
+                                <img src="{% static 'img/email.svg' %}" alt="" width="24" height="24">
+                                <span>{{ settings.contact_email }}</span>
+                            </a>
+                            {% endif %}
+                            {% if settings.contact_phone %}
+                            <a href="tel:{{ settings.contact_phone_tel }}" class="messenger-link">
+                                <img src="{% static 'img/phone.svg' %}" alt="" width="24" height="24">
+                                <span>{{ settings.contact_phone }}</span>
+                            </a>
+                            {% endif %}
+                            {% if settings.telegram_contact_url %}
+                            <a href="{{ settings.telegram_contact_url }}" class="messenger-link" target="_blank" rel="noopener">
+                                <img src="{% static 'img/telegram.svg' %}" alt="" width="24" height="24">
+                                <span>Telegram</span>
+                            </a>
+                            {% endif %}
+                            {% if settings.max_contact_url %}
+                            <a href="{{ settings.max_contact_url }}" class="messenger-link" target="_blank" rel="noopener">
+                                <img src="{% static 'img/max.svg' %}" alt="" width="24" height="24">
+                                <span>MAX</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="contact-form-wrap">
+                    <form method="post" class="contact-form" id="lead-form" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="form-errors">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        <div class="hp-field" aria-hidden="true">
+                            <label for="{{ form.name.id_for_label }}">Имя</label>
+                            {{ form.name }}
+                        </div>
+
+                        <div class="form-row">
+                            <label for="{{ form.contact_name.id_for_label }}">Имя *</label>
+                            {{ form.contact_name }}
+                            {% if form.contact_name.errors %}<span class="field-error">{{ form.contact_name.errors.0 }}</span>{% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <label for="{{ form.phone.id_for_label }}">Телефон *</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}<span class="field-error">{{ form.phone.errors.0 }}</span>{% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <label for="{{ form.email.id_for_label }}">Email</label>
+                            {{ form.email }}
+                        </div>
+
+                        <div class="form-row">
+                            <label for="{{ form.service.id_for_label }}">Категория услуги</label>
+                            {{ form.service }}
+                        </div>
+
+                        <div class="form-row">
+                            <label for="{{ form.message.id_for_label }}">Описание задачи</label>
+                            {{ form.message }}
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--lg btn--block">Отправить заявку</button>
+                        <p class="form-note">Нажимая кнопку, вы соглашаетесь с <a href="{% url 'landing:user_agreement' %}">Пользовательским соглашением</a> и <a href="{% url 'landing:privacy_policy' %}">Политикой конфиденциальности</a>.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container footer__inner">
+        <div class="footer__brand">
+            <a href="#top" class="logo logo--footer">
+                {% include 'includes/site_logo.html' %}
+            </a>
+            <p>Настройка, доработка и интеграция 1С:Предприятие 8.3</p>
+        </div>
+        <div class="footer__links">
+            <a href="#services">Услуги</a>
+            <a href="#pricing">Цены</a>
+            {% if team_members %}
+            <a href="#team">Команда</a>
+            {% endif %}
+            <a href="#process">Как работаем</a>
+            <a href="{% url 'blog:list' %}">Блог</a>
+            <a href="#contact">Контакты</a>
+            <a href="{% url 'landing:user_agreement' %}">Пользовательское соглашение</a>
+            <a href="{% url 'landing:privacy_policy' %}">Политика конфиденциальности</a>
+            {% if YANDEX_METRICA_ID or GOOGLE_ANALYTICS_ID %}
+            <a href="#" data-cookie-settings>Настройки cookie</a>
+            {% endif %}
+        </div>
+        {% if settings.telegram_contact_url or settings.max_contact_url or settings.contact_email or settings.contact_phone %}
+        <div class="footer__messengers">
+            {% if settings.contact_email %}
+            <a href="mailto:{{ settings.contact_email }}" title="Email: {{ settings.contact_email }}">
+                <img src="{% static 'img/email.svg' %}" alt="Email" width="28" height="28">
+            </a>
+            {% endif %}
+            {% if settings.contact_phone %}
+            <a href="tel:{{ settings.contact_phone_tel }}" title="Телефон: {{ settings.contact_phone }}">
+                <img src="{% static 'img/phone.svg' %}" alt="Телефон" width="28" height="28">
+            </a>
+            {% endif %}
+            {% if settings.telegram_contact_url %}
+            <a href="{{ settings.telegram_contact_url }}" target="_blank" rel="noopener" title="Telegram">
+                <img src="{% static 'img/telegram.svg' %}" alt="Telegram" width="28" height="28">
+            </a>
+            {% endif %}
+            {% if settings.max_contact_url %}
+            <a href="{{ settings.max_contact_url }}" target="_blank" rel="noopener" title="MAX">
+                <img src="{% static 'img/max.svg' %}" alt="MAX" width="28" height="28">
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        <p class="footer__copy">&copy; {% now "Y" %} {{ SITE_NAME }}. Все права защищены.</p>
+    </div>
+</footer>
+{% endblock %}

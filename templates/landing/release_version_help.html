@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Как узнать релиз конфигурации 1С 8 — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Инструкция: где посмотреть номер релиза конфигурации 1С:Предприятие 8 через меню Справка → О программе.{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='calculator' %}
+
+<main class="calc-page">
+    <section class="section">
+        <div class="container calc-layout">
+            {% include 'landing/includes/release_version_help.html' %}
+            <p class="release-help__back">
+                <a href="{% url 'landing:update_calculator' %}">← Вернуться к калькулятору обновлений</a>
+            </p>
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--simple">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ SITE_NAME }} · <a href="{% url 'landing:index' %}">На главную</a></p>
+    </div>
+</footer>
+{% endblock %}
