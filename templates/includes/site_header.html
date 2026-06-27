@@ -8,7 +8,7 @@
         <nav class="nav" id="nav">
             <a href="{% url 'landing:index' %}#services" class="nav__link">Услуги</a>
             <a href="{% url 'landing:index' %}#pricing" class="nav__link">Цены</a>
-            <a href="{% url 'landing:update_calculator' %}" class="nav__link{% if active_nav == 'calculator' %} nav__link--active{% endif %}">Калькулятор</a>
+            <a href="{% url 'landing:update_calculator' %}" class="nav__link{% if active_nav == 'calculator' %} nav__link--active{% endif %}">Калькулятор обновлений</a>
             <a href="{% url 'blog:list' %}" class="nav__link{% if active_nav == 'blog' %} nav__link--active{% endif %}">Блог</a>
             {% if has_team_members %}
             <a href="{% url 'landing:index' %}#team" class="nav__link">Команда</a>
