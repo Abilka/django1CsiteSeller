@@ -21,7 +21,10 @@ class BlogPost(models.Model):
         blank=True,
         help_text='Отображается в списке статей и в meta description, если не задано отдельно.',
     )
-    body = models.TextField('Текст статьи')
+    body = models.TextField(
+        'Текст статьи',
+        help_text='Поддерживается Markdown: **жирный**, *курсив*, `код`, блоки кода, списки, заголовки, ссылки и таблицы.',
+    )
     cover_image = models.ImageField('Обложка', upload_to='blog/', blank=True)
     meta_title = models.CharField('SEO title', max_length=70, blank=True)
     meta_description = models.CharField('SEO description', max_length=160, blank=True)

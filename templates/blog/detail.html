@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static blog_extras %}
 
 {% block title %}{{ post.seo_title }} | {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ post.seo_description }}{% endblock %}
@@ -76,7 +76,7 @@
             {% endif %}
 
             <div class="blog-article__content">
-                {{ post.body|linebreaks }}
+                {{ post.body|render_markdown }}
             </div>
 
             <footer class="blog-article__footer">
