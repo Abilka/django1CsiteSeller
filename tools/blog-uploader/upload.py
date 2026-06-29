@@ -54,6 +54,9 @@ except ImportError:
 
 COVER_NAMES = ('cover.jpg', 'cover.jpeg', 'cover.png', 'cover.webp')
 FRONTMATTER_RE = re.compile(r'^---\r?\n(.*?)\r?\n---\r?\n', re.DOTALL)
+# Безопасный размер части для серверов с nginx client_max_body_size ~4K.
+CHUNK_MAX_BYTES = 1200
+DIRECT_UPLOAD_MAX_BYTES = 2500
 
 
 def parse_args() -> argparse.Namespace:
@@ -133,9 +136,9 @@ def normalize_meta(raw: dict[str, str], md_path: Path, as_draft: bool) -> dict:
     meta = {
         'title': title,
         'slug': slug,
-        'excerpt': raw.get('excerpt', '').strip() or description,
-        'meta_title': raw.get('meta_title', '').strip(),
-        'meta_description': raw.get('meta_description', '').strip() or description,
+        'excerpt': _truncate(raw.get('excerpt', '').strip() or description, 5000),
+        'meta_title': _truncate(raw.get('meta_title', '').strip(), 70),
+        'meta_description': _truncate(raw.get('meta_description', '').strip() or description, 160),
         'is_published': is_published,
     }
 
@@ -169,6 +172,53 @@ def load_article(md_path: Path, as_draft: bool) -> tuple[dict, str, Path | None]
     return meta, body, cover_path
 
 
+def _truncate(value: str, max_len: int) -> str:
+    if len(value) <= max_len:
+        return value
+    return value[: max_len - 1].rstrip() + '…'
+
+
+def split_body(body: str, max_bytes: int = CHUNK_MAX_BYTES) -> list[str]:
+    if not body:
+        return ['']
+
+    chunks: list[str] = []
+    current: list[str] = []
+    current_size = 0
+
+    for char in body:
+        char_size = len(char.encode('utf-8'))
+        if current and current_size + char_size > max_bytes:
+            chunks.append(''.join(current))
+            current = [char]
+            current_size = char_size
+        else:
+            current.append(char)
+            current_size += char_size
+
+    if current:
+        chunks.append(''.join(current))
+    return chunks
+
+
+def build_import_payload(meta: dict, body_chunk: str, chunk_index: int, chunk_total: int) -> dict:
+    payload = {
+        'title': meta['title'],
+        'slug': meta['slug'],
+        'excerpt': meta.get('excerpt', ''),
+        'meta_title': meta.get('meta_title', ''),
+        'meta_description': meta.get('meta_description', ''),
+        'is_published': bool(meta.get('is_published', False)),
+        'chunk_index': chunk_index,
+        'chunk_total': chunk_total,
+        'body_chunk': body_chunk,
+    }
+    published_at = meta.get('published_at')
+    if published_at:
+        payload['published_at'] = published_at
+    return payload
+
+
 def build_payload(meta: dict, body: str) -> dict:
     payload = {
         'title': meta['title'],
@@ -183,6 +233,57 @@ def build_payload(meta: dict, body: str) -> dict:
     if published_at:
         payload['published_at'] = published_at
     return payload
+
+
+def _raise_for_response(response: requests.Response) -> None:
+    if response.status_code < 400:
+        return
+    detail = response.text.strip() or response.reason
+    if response.status_code == 500 and '<html>' in detail.lower():
+        detail = (
+            'HTTP 500 от nginx — вероятно, слишком большой запрос. '
+            'Обновите скрипт (chunked import) или увеличьте client_max_body_size на сервере.'
+        )
+    raise RuntimeError(f'HTTP {response.status_code}: {detail}')
+
+
+def upload_cover(
+    session: requests.Session,
+    api_base: str,
+    slug: str,
+    cover_path: Path,
+) -> None:
+    mime_type = mimetypes.guess_type(cover_path.name)[0] or 'application/octet-stream'
+    with cover_path.open('rb') as cover_file:
+        response = session.patch(
+            f'{api_base}/posts/{slug}/',
+            files={'cover_image': (cover_path.name, cover_file, mime_type)},
+        )
+    _raise_for_response(response)
+
+
+def upload_article_chunked(
+    session: requests.Session,
+    api_base: str,
+    meta: dict,
+    body: str,
+) -> tuple[str, dict, bool]:
+    chunks = split_body(body)
+    result: dict = {}
+    created = False
+
+    for index, chunk in enumerate(chunks):
+        payload = build_import_payload(meta, chunk, index, len(chunks))
+        response = session.post(f'{api_base}/import/', json=payload, timeout=120)
+        _raise_for_response(response)
+        if index + 1 == len(chunks):
+            result = response.json()
+            created = response.status_code == 201
+        elif response.status_code != 202:
+            _raise_for_response(response)
+
+    slug = result.get('slug', meta['slug'])
+    return slug, result, created
 
 
 def article_exists(session: requests.Session, api_base: str, slug: str) -> bool:
@@ -204,39 +305,31 @@ def upload_article(
     if dry_run:
         cover_note = f', обложка: {cover_path.name}' if cover_path else ''
         status = 'черновик' if not payload['is_published'] else 'публикация'
-        return f'[dry-run] «{payload["title"]}» ({slug}), {status}{cover_note}'
+        chunks = split_body(body)
+        chunk_note = f', частей: {len(chunks)}' if len(chunks) > 1 else ''
+        return f'[dry-run] «{payload["title"]}» ({slug}), {status}{cover_note}{chunk_note}'
+
+    body_bytes = len(body.encode('utf-8'))
+    use_chunked = body_bytes > DIRECT_UPLOAD_MAX_BYTES or cover_path is not None
+
+    if use_chunked:
+        slug, result, created = upload_article_chunked(session, api_base, meta, body)
+        if cover_path:
+            upload_cover(session, api_base, slug, cover_path)
+        action = 'создание' if created else 'обновление'
+        return f'OK: {action} «{result.get("title", slug)}» → {result.get("url", slug)}'
 
     exists = article_exists(session, api_base, slug)
     action = 'обновление' if exists else 'создание'
 
-    if cover_path:
-        data = {key: _form_value(value) for key, value in payload.items()}
-        mime_type = mimetypes.guess_type(cover_path.name)[0] or 'application/octet-stream'
-        with cover_path.open('rb') as cover_file:
-            files = {'cover_image': (cover_path.name, cover_file, mime_type)}
-            if exists:
-                response = session.patch(f'{api_base}/posts/{slug}/', data=data, files=files)
-            else:
-                response = session.post(f'{api_base}/posts/', data=data, files=files)
-    elif exists:
+    if exists:
         response = session.patch(f'{api_base}/posts/{slug}/', json=payload)
     else:
         response = session.post(f'{api_base}/posts/', json=payload)
 
-    if response.status_code >= 400:
-        detail = response.text.strip() or response.reason
-        raise RuntimeError(f'HTTP {response.status_code}: {detail}')
-
+    _raise_for_response(response)
     result = response.json()
     return f'OK: {action} «{result.get("title", slug)}» → {result.get("url", slug)}'
-
-
-def _form_value(value) -> str:
-    if isinstance(value, bool):
-        return 'true' if value else 'false'
-    if value is None:
-        return ''
-    return str(value)
 
 
 def iter_markdown_files(folder: Path) -> list[Path]:
