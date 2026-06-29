@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static humanize %}
+{% load static humanize landing_extras %}
 
 {% block title %}Калькулятор обновлений 1С — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}Определите последовательность установки промежуточных обновлений конфигураций 1С:Предприятие 8.{% endblock %}
@@ -96,14 +96,14 @@
                     </div>
                     <div class="calc-pricing__row">
                         <span>Ставка</span>
-                        <strong>{{ result.hourly_rate|intcomma }} ₽/ч</strong>
+                        <strong>{{ result.hourly_rate|format_price }} ₽/ч</strong>
                     </div>
                     <div class="calc-pricing__row calc-pricing__row--total">
                         <span>Ориентировочная стоимость</span>
-                        <strong>~{{ result.estimated_price|intcomma }} ₽</strong>
+                        <strong>~{{ result.estimated_price|format_price }} ₽</strong>
                     </div>
                     <p class="calc-pricing__formula">
-                        {{ result.steps_count }} × {{ result.hours_per_release }} ч × {{ result.hourly_rate|intcomma }} ₽
+                        {{ result.steps_count }} × {{ result.hours_per_release }} ч × {{ result.hourly_rate|format_price }} ₽
                     </p>
                 </div>
                 {% if result.min_platform %}

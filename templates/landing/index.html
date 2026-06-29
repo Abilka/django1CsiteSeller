@@ -9,15 +9,15 @@
         <div class="hero__bg"></div>
         <div class="container hero__inner">
             <div class="hero__content">
-                <span class="badge">1С:Предприятие 8.3</span>
-                <h1 class="hero__title">1С, которая помогает бизнесу<br><span>подключаемся к задаче и доводим до результата</span></h1>
-                <p class="hero__subtitle">Установка, обновление, исправление ошибок, разработка и интеграции. Называем смету и сроки <strong>до начала</strong> работ.</p>
+                <span class="badge">1С:Предприятие</span>
+                <h1 class="hero__title">Сделаем 1С <br><span>вашим помощником в бизнесе</span></h1>
+                <p class="hero__subtitle">Установка, обновление, исправление ошибок, разработка и интеграции.<br>Называем смету и сроки <strong>до начала</strong> работ.</p>
                 <div class="hero__actions">
                     <a href="#contact" class="btn btn--primary btn--lg">Бесплатная консультация</a>
                     <a href="#pricing" class="btn btn--ghost btn--lg">Смотреть цены</a>
                 </div>
                 <ul class="hero__stats">
-                    <li><strong>{{ settings.hourly_rate|intcomma }} ₽</strong> стоимость часа</li>
+                    <li><strong>{{ settings.hourly_rate|format_price }} ₽</strong> стоимость часа</li>
                     <li><strong>8.3</strong> типовые и нетиповые</li>
                     <li><strong>100%</strong> лицензионная политика</li>
                 </ul>
@@ -39,7 +39,7 @@
                         </div>
                         <div class="hero-card__row">
                             <span>Оценка</span>
-                            <strong>~{{ featured_task.price_display|intcomma }} ₽</strong>
+                            <strong>~{{ featured_task.price_display|format_price }} ₽</strong>
                         </div>
                         <div class="hero-card__row">
                             <span>Трудозатраты</span>
@@ -170,7 +170,7 @@
             <div class="section__head section__head--center">
                 <span class="section__tag">Примеры расчёта</span>
                 <h2 class="section__title">Типовые задачи и ориентировочная стоимость</h2>
-                <p class="section__desc">Расчёт по ставке <strong>{{ settings.hourly_rate|intcomma }} ₽/час</strong>. Точная смета — после уточнения деталей.</p>
+                <p class="section__desc">Расчёт по ставке <strong>{{ settings.hourly_rate|format_price }} ₽/час</strong>. Точная смета — после уточнения деталей.</p>
             </div>
             <div class="examples-grid">
                 {% for task in typical_tasks %}
@@ -184,11 +184,11 @@
                         </div>
                         <div class="example-card__row">
                             <span>Ставка</span>
-                            <strong>{{ settings.hourly_rate|intcomma }} ₽/ч</strong>
+                            <strong>{{ settings.hourly_rate|format_price }} ₽/ч</strong>
                         </div>
                         <div class="example-card__row example-card__row--total">
                             <span>Итого</span>
-                            <strong>~{{ task.price_display|intcomma }} ₽</strong>
+                            <strong>~{{ task.price_display|format_price }} ₽</strong>
                         </div>
                         <div class="example-card__row">
                             <span>Срок</span>
@@ -209,7 +209,7 @@
                 <span class="section__tag">Прайс-лист</span>
                 <h2 class="section__title">Ориентировочные цены на работы</h2>
                 <p class="section__desc">
-                    Базовая ставка: <strong>{{ settings.hourly_rate|intcomma }} ₽/час</strong>.
+                    Базовая ставка: <strong>{{ settings.hourly_rate|format_price }} ₽/час</strong>.
                     Итоговая стоимость зависит от конфигурации и объёма — фиксируем до начала работ.
                 </p>
             </div>
@@ -217,7 +217,7 @@
             <div class="rate-banner">
                 <div class="rate-banner__icon">⏱</div>
                 <div>
-                    <strong>Стоимость часа работы специалиста — {{ settings.hourly_rate|intcomma }} ₽</strong>
+                    <strong>Стоимость часа работы специалиста — {{ settings.hourly_rate|format_price }} ₽</strong>
                     <p>Применяется для разработки, доработок и нестандартных задач без фиксированного прайса.</p>
                 </div>
             </div>
@@ -246,7 +246,7 @@
                                         {% if item.note %}<span class="pricing-note">{{ item.note }}</span>{% endif %}
                                     </td>
                                     <td>{{ item.hours_display }}</td>
-                                    <td><strong>{{ item.price_display }}</strong></td>
+                                    <td><strong>{{ item.price_display|format_price }}</strong></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

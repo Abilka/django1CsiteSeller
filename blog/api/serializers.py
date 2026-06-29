@@ -1,4 +1,4 @@
-from django.utils.text import slugify
+from slugify import slugify as make_slug
 from rest_framework import serializers
 
 from blog.models import BlogPost
@@ -35,7 +35,7 @@ class BlogPostSerializer(serializers.ModelSerializer):
         return path
 
     def validate_slug(self, value):
-        slug = slugify(value, allow_unicode=True)
+        slug = make_slug(value, max_length=220)
         if not slug:
             raise serializers.ValidationError('Укажите корректный slug.')
         return slug
@@ -44,11 +44,11 @@ class BlogPostSerializer(serializers.ModelSerializer):
         title = attrs.get('title', getattr(self.instance, 'title', ''))
         slug = attrs.get('slug')
         if not slug and title:
-            attrs['slug'] = slugify(title, allow_unicode=True)
+            attrs['slug'] = make_slug(title, max_length=220)
         return attrs
 
     def create(self, validated_data):
-        slug = validated_data.get('slug') or slugify(validated_data['title'], allow_unicode=True)
+        slug = validated_data.get('slug') or make_slug(validated_data['title'], max_length=220)
         validated_data['slug'] = self._ensure_unique_slug(slug)
         return super().create(validated_data)
 

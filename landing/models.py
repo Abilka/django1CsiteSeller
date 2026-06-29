@@ -239,17 +239,17 @@ class PriceListItem(models.Model):
             self.recalculate_prices(hourly_rate)
         if self.price_from and self.price_to:
             if self.price_from == self.price_to:
-                return f'{self.price_from:,}'.replace(',', ' ') + ' ₽'
+                return f'{self.price_from:,}'.replace(',', '\u2009') + ' ₽'
             return (
-                f'{self.price_from:,}'.replace(',', ' ')
+                f'{self.price_from:,}'.replace(',', '\u2009')
                 + ' – '
-                + f'{self.price_to:,}'.replace(',', ' ')
+                + f'{self.price_to:,}'.replace(',', '\u2009')
                 + ' ₽'
             )
         if self.price_from:
-            return 'от ' + f'{self.price_from:,}'.replace(',', ' ') + ' ₽'
+            return 'от ' + f'{self.price_from:,}'.replace(',', '\u2009') + ' ₽'
         if self.price_to:
-            return 'до ' + f'{self.price_to:,}'.replace(',', ' ') + ' ₽'
+            return 'до ' + f'{self.price_to:,}'.replace(',', '\u2009') + ' ₽'
         return 'по оценке'
 
 

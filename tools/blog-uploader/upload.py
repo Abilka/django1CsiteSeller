@@ -2,37 +2,41 @@
 """
 Загрузка статей блога из папки на удалённый сайт через REST API.
 
-Структура папки со статьями:
+Формат статей — один .md файл с YAML frontmatter:
     articles/
-        my-article-slug/
-            article.json   # метаданные (title обязателен)
-            body.md        # текст в Markdown
-            cover.jpg      # необязательно (cover.png / cover.webp тоже подойдут)
+        0020-avtomatizaciya-na-baze-1s-c37a729b.md
+        0021-perehod-na-novye-versii-1s-c2757265.md
 
-article.json:
-    {
-        "title": "Заголовок статьи",
-        "slug": "my-article-slug",
-        "excerpt": "Краткое описание",
-        "meta_title": "",
-        "meta_description": "",
-        "is_published": true,
-        "published_at": "2026-06-29T12:00:00+03:00"
-    }
+Пример файла:
+    ---
+    title: "Заголовок статьи"
+    description: "SEO-описание для meta description и excerpt"
+    keyword: "ключевое слово"
+    category: "Категория"
+    ---
 
-Токен создаётся в Django admin или командой:
+    # Заголовок статьи
+
+    Текст в Markdown...
+
+Slug формируется автоматически из title (транслитерация кириллицы).
+Поля keyword, category и slug во frontmatter игнорируются.
+Обложка необязательна: cover.jpg рядом с .md или <slug>.jpg.
+
+Токен создаётся командой:
     python manage.py drf_create_token <username>
 
 Пример запуска:
-    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./articles
-    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./articles --dry-run
+    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test
+    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test --dry-run
+    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test --draft
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import mimetypes
+import re
 import sys
 from pathlib import Path
 
@@ -42,14 +46,19 @@ except ImportError:
     print('Установите зависимость: pip install requests', file=sys.stderr)
     sys.exit(1)
 
+try:
+    from slugify import slugify as make_slug
+except ImportError:
+    print('Установите зависимость: pip install python-slugify', file=sys.stderr)
+    sys.exit(1)
+
 COVER_NAMES = ('cover.jpg', 'cover.jpeg', 'cover.png', 'cover.webp')
-META_FILENAME = 'article.json'
-BODY_FILENAME = 'body.md'
+FRONTMATTER_RE = re.compile(r'^---\r?\n(.*?)\r?\n---\r?\n', re.DOTALL)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Загрузка статей блога из папки через REST API.',
+        description='Загрузка статей блога (.md с YAML frontmatter) через REST API.',
     )
     parser.add_argument(
         '--url',
@@ -65,35 +74,98 @@ def parse_args() -> argparse.Namespace:
         '--folder',
         required=True,
         type=Path,
-        help='Папка со статьями (подпапка = одна статья)',
+        help='Папка с .md файлами статей',
     )
     parser.add_argument(
         '--dry-run',
         action='store_true',
         help='Только проверить файлы, без отправки на сервер',
     )
+    parser.add_argument(
+        '--draft',
+        action='store_true',
+        help='Загрузить как черновик (is_published=false)',
+    )
     return parser.parse_args()
 
 
-def load_article(article_dir: Path) -> tuple[dict, str, Path | None]:
-    meta_path = article_dir / META_FILENAME
-    body_path = article_dir / BODY_FILENAME
+def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        raise ValueError('Файл должен начинаться с YAML frontmatter (--- ... ---)')
 
-    if not meta_path.is_file():
-        raise FileNotFoundError(f'Нет {META_FILENAME} в {article_dir}')
-    if not body_path.is_file():
-        raise FileNotFoundError(f'Нет {BODY_FILENAME} в {article_dir}')
+    meta: dict[str, str] = {}
+    for line in match.group(1).splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or ':' not in line:
+            continue
+        key, _, value = line.partition(':')
+        meta[key.strip()] = _unquote(value.strip())
 
-    meta = json.loads(meta_path.read_text(encoding='utf-8'))
-    body = body_path.read_text(encoding='utf-8')
+    body = text[match.end():].lstrip('\r\n')
+    return meta, body
 
-    if not meta.get('title'):
-        raise ValueError(f'Поле "title" обязательно в {meta_path}')
 
-    if not meta.get('slug'):
-        meta['slug'] = article_dir.name
+def _unquote(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+        return value[1:-1]
+    return value
 
-    cover_path = next((article_dir / name for name in COVER_NAMES if (article_dir / name).is_file()), None)
+
+def normalize_meta(raw: dict[str, str], md_path: Path, as_draft: bool) -> dict:
+    title = raw.get('title', '').strip()
+    if not title:
+        raise ValueError(f'Поле "title" обязательно в {md_path.name}')
+
+    slug = make_slug(title, max_length=220)
+    if not slug:
+        raise ValueError(f'Не удалось сформировать slug из title в {md_path.name}')
+    description = raw.get('description', '').strip()
+
+    is_published_raw = raw.get('is_published', '').strip().lower()
+    if is_published_raw in ('true', '1', 'yes'):
+        is_published = True
+    elif is_published_raw in ('false', '0', 'no'):
+        is_published = False
+    else:
+        is_published = not as_draft
+
+    meta = {
+        'title': title,
+        'slug': slug,
+        'excerpt': raw.get('excerpt', '').strip() or description,
+        'meta_title': raw.get('meta_title', '').strip(),
+        'meta_description': raw.get('meta_description', '').strip() or description,
+        'is_published': is_published,
+    }
+
+    published_at = raw.get('published_at', '').strip()
+    if published_at:
+        meta['published_at'] = published_at
+
+    return meta
+
+
+def find_cover(md_path: Path) -> Path | None:
+    for name in COVER_NAMES:
+        candidate = md_path.parent / name
+        if candidate.is_file():
+            return candidate
+    for suffix in ('.jpg', '.jpeg', '.png', '.webp'):
+        candidate = md_path.with_suffix(suffix)
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_article(md_path: Path, as_draft: bool) -> tuple[dict, str, Path | None]:
+    text = md_path.read_text(encoding='utf-8')
+    raw_meta, body = parse_frontmatter(text)
+    if not body.strip():
+        raise ValueError(f'Пустое тело статьи в {md_path.name}')
+
+    meta = normalize_meta(raw_meta, md_path, as_draft)
+    cover_path = find_cover(md_path)
     return meta, body, cover_path
 
 
@@ -131,7 +203,8 @@ def upload_article(
 
     if dry_run:
         cover_note = f', обложка: {cover_path.name}' if cover_path else ''
-        return f'[dry-run] «{payload["title"]}» ({slug}){cover_note}'
+        status = 'черновик' if not payload['is_published'] else 'публикация'
+        return f'[dry-run] «{payload["title"]}» ({slug}), {status}{cover_note}'
 
     exists = article_exists(session, api_base, slug)
     action = 'обновление' if exists else 'создание'
@@ -166,13 +239,13 @@ def _form_value(value) -> str:
     return str(value)
 
 
-def iter_article_dirs(folder: Path) -> list[Path]:
+def iter_markdown_files(folder: Path) -> list[Path]:
     if not folder.is_dir():
         raise NotADirectoryError(f'Папка не найдена: {folder}')
-    dirs = sorted(path for path in folder.iterdir() if path.is_dir())
-    if not dirs:
-        raise FileNotFoundError(f'В {folder} нет подпапок со статьями')
-    return dirs
+    md_files = sorted(folder.glob('*.md'))
+    if not md_files:
+        raise FileNotFoundError(f'В {folder} нет .md файлов')
+    return md_files
 
 
 def main() -> int:
@@ -185,14 +258,14 @@ def main() -> int:
     })
 
     errors = 0
-    for article_dir in iter_article_dirs(args.folder):
+    for md_path in iter_markdown_files(args.folder):
         try:
-            meta, body, cover_path = load_article(article_dir)
+            meta, body, cover_path = load_article(md_path, as_draft=args.draft)
             message = upload_article(session, api_base, meta, body, cover_path, args.dry_run)
             print(message)
         except Exception as exc:
             errors += 1
-            print(f'ОШИБКА [{article_dir.name}]: {exc}', file=sys.stderr)
+            print(f'ОШИБКА [{md_path.name}]: {exc}', file=sys.stderr)
 
     if errors:
         print(f'\nГотово с ошибками: {errors}', file=sys.stderr)
