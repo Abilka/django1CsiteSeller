@@ -2,6 +2,8 @@ import re
 
 from django import forms
 
+from .antispam import issue_form_timestamp
+from .antispam import is_bot_submission
 from .models import LeadRequest
 
 
@@ -12,19 +14,30 @@ class LeadRequestForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': 'Как к вам обращаться?',
-            'autocomplete': 'off',
+            'autocomplete': 'name',
         }),
     )
+    company_website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'autocomplete': 'off',
+            'tabindex': '-1',
+        }),
+    )
+    fax_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'autocomplete': 'off',
+            'tabindex': '-1',
+        }),
+    )
+    _form_ts = forms.CharField(required=False, widget=forms.HiddenInput())
+    _js_ok = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = LeadRequest
-        fields = ['name', 'phone', 'email', 'service', 'message']
+        fields = ['phone', 'email', 'service', 'message']
         widgets = {
-            'name': forms.TextInput(attrs={
-                'placeholder': 'Как к вам обращаться?',
-                'autocomplete': 'off',
-                'tabindex': '-1',
-            }),
             'phone': forms.TextInput(attrs={
                 'placeholder': '+7 (___) ___-__-__',
                 'autocomplete': 'tel',
@@ -45,21 +58,22 @@ class LeadRequestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_bot = False
-        self.fields['name'].label = 'Имя'
-        self.fields['name'].required = False
-        self.fields['name'].widget.attrs['class'] = 'hp-input'
+        self.fields['company_website'].label = 'Сайт компании'
+        self.fields['fax_number'].label = 'Факс'
         self.fields['phone'].label = 'Телефон'
         self.fields['email'].label = 'Email'
         self.fields['service'].label = 'Категория услуги'
         self.fields['message'].label = 'Описание задачи'
-        if not self.is_bound and not self.initial.get('phone'):
-            self.initial['phone'] = '+7 '
-        for field_name, field in self.fields.items():
-            if field_name != 'name':
-                field.widget.attrs.setdefault('class', 'form-control')
+        if not self.is_bound:
+            self.initial.setdefault('_form_ts', issue_form_timestamp())
+            self.initial.setdefault('phone', '+7 ')
+        for field in self.fields.values():
+            field.widget.attrs.setdefault('class', 'form-control')
 
     def is_valid(self):
-        if self.is_bound and self.data.get(self.add_prefix('name'), '').strip():
+        if self.is_bound and is_bot_submission(
+            lambda name: self.data.get(self.add_prefix(name), '')
+        ):
             self.is_bot = True
             self.cleaned_data = {}
             self._errors = {}

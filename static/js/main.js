@@ -48,7 +48,19 @@
     });
 
     initPhoneMask();
+    initLeadFormAntispam();
 })();
+
+function initLeadFormAntispam() {
+    const form = document.getElementById('lead-form');
+    if (!form) {
+        return;
+    }
+    const jsField = form.querySelector('[name="_js_ok"]');
+    if (jsField) {
+        jsField.value = 'ok';
+    }
+}
 
 function initPhoneMask() {
     const input = document.querySelector('[data-phone-mask]');

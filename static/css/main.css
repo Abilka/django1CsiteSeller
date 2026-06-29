@@ -846,14 +846,16 @@ ul { list-style: none; }
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
 }
-.hp-field {
+.form-row--offscreen {
     position: absolute;
-    left: -9999px;
+    left: -10000px;
+    top: auto;
     width: 1px;
     height: 1px;
     overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .form-row { margin-bottom: 20px; }

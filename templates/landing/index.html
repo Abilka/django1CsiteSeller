@@ -433,10 +433,16 @@
                         <div class="form-errors">{{ form.non_field_errors }}</div>
                         {% endif %}
 
-                        <div class="hp-field" aria-hidden="true">
-                            <label for="{{ form.name.id_for_label }}">Имя</label>
-                            {{ form.name }}
+                        <div class="form-row form-row--offscreen" aria-hidden="true">
+                            <label for="{{ form.company_website.id_for_label }}">Сайт компании</label>
+                            {{ form.company_website }}
                         </div>
+                        <div class="form-row form-row--offscreen" aria-hidden="true">
+                            <label for="{{ form.fax_number.id_for_label }}">Факс</label>
+                            {{ form.fax_number }}
+                        </div>
+                        {{ form._form_ts }}
+                        {{ form._js_ok }}
 
                         <div class="form-row">
                             <label for="{{ form.contact_name.id_for_label }}">Имя *</label>

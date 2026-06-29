@@ -31,7 +31,7 @@ sitemaps = {
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/', include('landing.api.urls')),
+    path('api/v1/', include('config.api_urls')),
     path('blog/', include('blog.urls')),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
