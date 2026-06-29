@@ -10,7 +10,7 @@ JS_TOKEN = 'ok'
 _signer = Signer(salt=SIGNER_SALT)
 
 HONEYPOT_FIELDS = ('company_website', 'fax_number')
-ANTISPAM_FIELDS = ('_form_ts', '_js_ok')
+ANTISPAM_FIELDS = ('form_ts', 'js_ok')
 
 
 def issue_form_timestamp() -> str:
@@ -25,10 +25,10 @@ def is_bot_submission(get_field) -> bool:
         if get(field):
             return True
 
-    if get('_js_ok') != JS_TOKEN:
+    if get('js_ok') != JS_TOKEN:
         return True
 
-    token = get('_form_ts')
+    token = get('form_ts')
     if not token:
         return True
 

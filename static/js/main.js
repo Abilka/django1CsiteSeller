@@ -56,7 +56,7 @@ function initLeadFormAntispam() {
     if (!form) {
         return;
     }
-    const jsField = form.querySelector('[name="_js_ok"]');
+    const jsField = form.querySelector('[name="js_ok"]');
     if (jsField) {
         jsField.value = 'ok';
     }

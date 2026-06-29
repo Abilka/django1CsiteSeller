@@ -31,8 +31,8 @@ class LeadRequestForm(forms.ModelForm):
             'tabindex': '-1',
         }),
     )
-    _form_ts = forms.CharField(required=False, widget=forms.HiddenInput())
-    _js_ok = forms.CharField(required=False, widget=forms.HiddenInput())
+    form_ts = forms.CharField(required=False, widget=forms.HiddenInput())
+    js_ok = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = LeadRequest
@@ -65,7 +65,7 @@ class LeadRequestForm(forms.ModelForm):
         self.fields['service'].label = 'Категория услуги'
         self.fields['message'].label = 'Описание задачи'
         if not self.is_bound:
-            self.initial.setdefault('_form_ts', issue_form_timestamp())
+            self.initial.setdefault('form_ts', issue_form_timestamp())
             self.initial.setdefault('phone', '+7 ')
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'form-control')

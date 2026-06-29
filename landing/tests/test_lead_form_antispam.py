@@ -24,8 +24,8 @@ class LeadFormAntispamTests(TestCase):
             'email': 'ivan@example.com',
             'service': 'other',
             'message': 'Нужна помощь с 1С',
-            '_form_ts': _signer.sign(str(issued_at)),
-            '_js_ok': JS_TOKEN,
+            'form_ts': _signer.sign(str(issued_at)),
+            'js_ok': JS_TOKEN,
             'company_website': '',
             'fax_number': '',
         }
@@ -47,7 +47,7 @@ class LeadFormAntispamTests(TestCase):
             self.assertTrue(form.is_bot)
 
     def test_missing_js_token_marks_submission_as_bot(self):
-        payload, issued_at = self._valid_payload(_js_ok='')
+        payload, issued_at = self._valid_payload(js_ok='')
         with patch('landing.antispam.time.time', return_value=issued_at + 5):
             form = LeadRequestForm(payload)
             self.assertTrue(form.is_valid())
@@ -61,7 +61,7 @@ class LeadFormAntispamTests(TestCase):
             self.assertTrue(form.is_bot)
 
     def test_invalid_timestamp_marks_submission_as_bot(self):
-        payload, _issued_at = self._valid_payload(_form_ts='broken-token')
+        payload, _issued_at = self._valid_payload(form_ts='broken-token')
         form = LeadRequestForm(payload)
         self.assertTrue(form.is_valid())
         self.assertTrue(form.is_bot)
@@ -90,8 +90,8 @@ class AntispamHelperTests(TestCase):
         issued_at = int(time.time())
         data = {
             'company_website': 'spam',
-            '_js_ok': JS_TOKEN,
-            '_form_ts': _signer.sign(str(issued_at)),
+            'js_ok': JS_TOKEN,
+            'form_ts': _signer.sign(str(issued_at)),
         }
         with patch('landing.antispam.time.time', return_value=issued_at + 5):
             self.assertTrue(is_bot_submission(data.get))
