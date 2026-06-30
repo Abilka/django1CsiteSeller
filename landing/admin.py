@@ -75,11 +75,13 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 'freesc_auto_sync_enabled',
                 'freesc_sync_interval_days',
                 'freesc_last_sync_at',
+                'its_sync_now_link',
             ),
             'description': (
                 'Автоматическая загрузка релизов с its.1c.ru/db/updinfo. '
                 'Планировщик включается переменной окружения FREESC_RUN_SCHEDULER=1 '
-                '(проверка каждые 6 часов, синхронизация — по интервалу в днях).'
+                '(проверка каждые 6 часов, синхронизация — по интервалу в днях). '
+                'Кнопка ниже запускает синхронизацию немедленно, не дожидаясь интервала.'
             ),
         }),
         ('IndexNow', {
@@ -99,6 +101,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         'favicon_preview',
         'telegram_test_link',
         'indexnow_submit_all_link',
+        'its_sync_now_link',
     )
 
     def get_urls(self):
@@ -113,6 +116,11 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 'submit-indexnow/',
                 self.admin_site.admin_view(self.submit_indexnow_view),
                 name='landing_sitesettings_submit_indexnow',
+            ),
+            path(
+                'sync-its-releases/',
+                self.admin_site.admin_view(self.sync_its_releases_view),
+                name='landing_sitesettings_sync_its_releases',
             ),
         ]
         return custom_urls + urls
@@ -148,6 +156,56 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         result = submit_blog_posts(posts)
         for level, text in build_indexnow_admin_messages(result):
             getattr(messages, level)(request, text)
+        return redirect('admin:landing_sitesettings_change', 1)
+
+    @admin.display(description='Принудительная синхронизация')
+    def its_sync_now_link(self, obj):
+        url = reverse('admin:landing_sitesettings_sync_its_releases')
+        return format_html(
+            '<a class="button" href="{}">Синхронизировать релизы с ИТС сейчас</a>',
+            url,
+        )
+
+    def sync_its_releases_view(self, request):
+        from landing.services.freesc_sync import run_scheduled_sync
+
+        try:
+            log = run_scheduled_sync(force=True)
+        except Exception as exc:
+            messages.error(request, f'Синхронизация прервана: {exc}')
+            return redirect('admin:landing_sitesettings_change', 1)
+
+        log_url = reverse('admin:landing_releasesynclog_change', args=[log.pk])
+        if log.status == ReleaseSyncLog.Status.SUCCESS:
+            messages.success(
+                request,
+                format_html(
+                    'Синхронизация завершена: {}. <a href="{}">Подробности в логе</a>.',
+                    log.message,
+                    log_url,
+                ),
+            )
+        elif log.status == ReleaseSyncLog.Status.PARTIAL:
+            messages.warning(
+                request,
+                format_html(
+                    'Синхронизация частично успешна: {}. {} '
+                    '<a href="{}">Подробности в логе</a>.',
+                    log.message,
+                    log.error_message,
+                    log_url,
+                ),
+            )
+        else:
+            messages.error(
+                request,
+                format_html(
+                    'Синхронизация не удалась: {}. '
+                    '<a href="{}">Подробности в логе</a>.',
+                    log.error_message or log.message,
+                    log_url,
+                ),
+            )
         return redirect('admin:landing_sitesettings_change', 1)
 
     @admin.display(description='Предпросмотр')
