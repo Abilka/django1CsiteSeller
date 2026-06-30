@@ -28,11 +28,11 @@ def post_list(request):
     pagination_prev = ''
     pagination_next = ''
     if page.has_previous():
-        prev_page = page.previous_page_number
+        prev_page = page.previous_page_number()
         prev_query = f'?page={prev_page}' if prev_page > 1 else ''
         pagination_prev = _absolute_url(f'{request.path}{prev_query}', request)
     if page.has_next():
-        pagination_next = _absolute_url(f'{request.path}?page={page.next_page_number}', request)
+        pagination_next = _absolute_url(f'{request.path}?page={page.next_page_number()}', request)
 
     page_title = f'Блог о 1С — статьи и инструкции | {settings.SITE_NAME}'
     page_description = (
