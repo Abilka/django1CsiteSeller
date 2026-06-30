@@ -393,6 +393,52 @@ class OneCRelease(models.Model):
         return f'{self.configuration.slug} — {self.version}'
 
 
+class MigrationPath(models.Model):
+    slug = models.SlugField('Код маршрута', max_length=60, unique=True)
+    name = models.CharField('Название миграции', max_length=200)
+    source_name = models.CharField('Исходная конфигурация', max_length=200)
+    target_name = models.CharField('Целевая конфигурация', max_length=200)
+    description = models.TextField('Описание', blank=True)
+    base_hours = models.DecimalField(
+        'Базовая оценка, часов',
+        max_digits=6,
+        decimal_places=1,
+        default=0,
+        help_text='Используется, если этапы не заданы.',
+    )
+    is_published = models.BooleanField('Опубликовано', default=True)
+    sort_order = models.PositiveSmallIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Маршрут миграции'
+        verbose_name_plural = 'Маршруты миграции'
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class MigrationPathStep(models.Model):
+    migration_path = models.ForeignKey(
+        MigrationPath,
+        on_delete=models.CASCADE,
+        related_name='steps',
+        verbose_name='Маршрут',
+    )
+    title = models.CharField('Этап', max_length=200)
+    description = models.TextField('Описание', blank=True)
+    estimated_hours = models.DecimalField('Оценка, часов', max_digits=6, decimal_places=1)
+    sort_order = models.PositiveSmallIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Этап миграции'
+        verbose_name_plural = 'Этапы миграции'
+        ordering = ['sort_order', 'title']
+
+    def __str__(self):
+        return f'{self.migration_path.name} — {self.title}'
+
+
 class ReleaseSyncLog(models.Model):
     class Status(models.TextChoices):
         RUNNING = 'running', 'Выполняется'

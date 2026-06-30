@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static humanize landing_extras seo_tags %}
+
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title=tool_page_title og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% software_application_schema_tag tool_name tool_description as tool_schema %}
+<script type="application/ld+json">{{ tool_schema|json_ld }}</script>
+{% breadcrumb_schema_tag "Главная" SITE_URL "Инструменты" tools_index_url tool_name canonical_url as breadcrumbs %}
+<script type="application/ld+json">{{ breadcrumbs|json_ld }}</script>
+{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='tools' %}
+
+<main class="calc-page tool-page">
+    <section class="section calc-hero">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">{{ tool_tag }}</span>
+                <h1 class="section__title">{{ tool_name }}</h1>
+                <p class="section__desc">{{ tool_description }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt">
+        <div class="container calc-layout">
+            {% block tool_content %}{% endblock %}
+        </div>
+    </section>
+
+    <section class="section tool-crosslinks">
+        <div class="container calc-layout">
+            <h2 class="tool-crosslinks__title">Другие инструменты</h2>
+            <div class="tools-grid tools-grid--compact">
+                {% for tool in other_tools %}
+                <a href="{% url tool.url_name %}" class="tools-card tools-card--compact">
+                    <span class="tools-card__tag">{{ tool.tag }}</span>
+                    <strong>{{ tool.name }}</strong>
+                </a>
+                {% endfor %}
+            </div>
+            <p class="tool-crosslinks__cta">
+                <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Заказать внедрение</a>
+                <a href="{% url 'landing:update_calculator' %}" class="btn btn--ghost btn--sm">Калькулятор обновлений</a>
+            </p>
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--simple">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ SITE_NAME }} · <a href="{% url 'landing:tools_index' %}">Все инструменты</a> · <a href="{% url 'landing:index' %}">На главную</a></p>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_js %}{% block tool_js %}{% endblock %}{% endblock %}

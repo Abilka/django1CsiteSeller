@@ -1,0 +1,98 @@
+{% extends 'landing/tools/base_tool.html' %}
+{% load static humanize landing_extras %}
+
+{% block tool_content %}
+<form class="calc-form" method="post" id="platform-check-form">
+    {% csrf_token %}
+    <div class="calc-form__grid">
+        <div class="form-field">
+            <label class="form-label" for="configuration">Конфигурация</label>
+            <select class="form-select" name="configuration" id="configuration" required>
+                <option value="">— Выберите конфигурацию —</option>
+                {% for config in configurations %}
+                <option value="{{ config.slug }}" {% if selected_config and selected_config.slug == config.slug %}selected{% endif %}>
+                    {{ config.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label class="form-label" for="platform_version">Версия платформы</label>
+            <input class="form-input" type="text" name="platform_version" id="platform_version"
+                value="{{ platform_version }}" placeholder="8.3.27.1859" required>
+        </div>
+        <div class="form-field">
+            <label class="form-label" for="target_release">Целевой релиз</label>
+            <select class="form-select" name="target_release" id="target_release"
+                {% if not selected_config %}disabled{% endif %}>
+                <option value="">— Последний релиз —</option>
+                {% for release in releases %}
+                <option value="{{ release.version }}" {% if target_release == release.version %}selected{% endif %}>
+                    {{ release.version }}{% if release.min_platform %} (платформа {{ release.min_platform }}){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label class="form-label" for="current_release">Текущий релиз (опционально)</label>
+            <select class="form-select" name="current_release" id="current_release"
+                {% if not selected_config %}disabled{% endif %}>
+                <option value="">— Не указывать —</option>
+                {% for release in releases %}
+                <option value="{{ release.version }}" {% if current_release == release.version %}selected{% endif %}>
+                    {{ release.version }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn--primary">Проверить совместимость</button>
+</form>
+
+{% if error %}
+<div class="calc-result calc-result--error" role="alert">
+    <strong>Не удалось выполнить проверку</strong>
+    <p>{{ error }}</p>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="calc-result {% if result.is_compatible %}calc-result--success{% else %}calc-result--error{% endif %}">
+    {% if result.is_compatible %}
+    <strong>Платформа подходит</strong>
+    {% else %}
+    <strong>Требуется обновление платформы</strong>
+    {% endif %}
+    <p>{{ result.message }}</p>
+    <div class="calc-pricing">
+        <div class="calc-pricing__row">
+            <span>Конфигурация</span>
+            <strong>{{ result.configuration_name }}</strong>
+        </div>
+        <div class="calc-pricing__row">
+            <span>Целевой релиз</span>
+            <strong>{{ result.target_release }}</strong>
+        </div>
+        <div class="calc-pricing__row">
+            <span>Ваша платформа</span>
+            <strong><code>{{ result.platform_version }}</code></strong>
+        </div>
+        <div class="calc-pricing__row">
+            <span>Минимальная платформа</span>
+            <strong><code>{{ result.required_platform }}</code></strong>
+        </div>
+    </div>
+    {% if not result.is_compatible and result.update_steps_count %}
+    <p class="calc-result__intro">Дополнительно: для обновления конфигурации потребуется {{ result.update_steps_count }} релиз(ов), ориентировочно ~{{ result.estimated_update_price|format_price }} ₽.</p>
+    {% endif %}
+    <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Заказать обновление платформы</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block tool_js %}
+<script>
+    window.TOOL_CONFIG = { apiBase: "/api/v1/tools/platform-check/", versionsUrl: "/api/v1/configurations/" };
+</script>
+<script src="{% static 'js/tools/platform_check.js' %}"></script>
+{% endblock %}

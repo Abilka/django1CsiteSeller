@@ -21,7 +21,13 @@ class StaticViewSitemap(BaseSitemap):
     def items(self):
         return [
             'landing:index',
+            'landing:tools_index',
             'landing:update_calculator',
+            'landing:platform_check',
+            'landing:release_feed',
+            'landing:task_estimator',
+            'landing:query_formatter',
+            'landing:migration_calculator',
             'landing:release_version_help',
             'landing:user_agreement',
             'landing:privacy_policy',

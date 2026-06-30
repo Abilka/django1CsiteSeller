@@ -12,6 +12,8 @@ from blog.services.indexnow import (
 from .models import (
     Certificate,
     LeadRequest,
+    MigrationPath,
+    MigrationPathStep,
     OneCConfiguration,
     OneCRelease,
     PriceListItem,
@@ -285,6 +287,21 @@ class OneCReleaseAdmin(admin.ModelAdmin):
     search_fields = ('version', 'configuration__name', 'configuration__slug')
     list_editable = ('sort_order',)
     autocomplete_fields = ('configuration',)
+
+
+class MigrationPathStepInline(admin.TabularInline):
+    model = MigrationPathStep
+    extra = 1
+    fields = ('title', 'description', 'estimated_hours', 'sort_order')
+
+
+@admin.register(MigrationPath)
+class MigrationPathAdmin(admin.ModelAdmin):
+    list_display = ('name', 'source_name', 'target_name', 'is_published', 'sort_order')
+    list_editable = ('is_published', 'sort_order')
+    search_fields = ('name', 'slug', 'source_name', 'target_name')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = (MigrationPathStepInline,)
 
 
 @admin.register(ReleaseSyncLog)

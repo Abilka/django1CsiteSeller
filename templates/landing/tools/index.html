@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static seo_tags %}
+
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title="Инструменты для разработчиков 1С — "|add:SITE_NAME meta_description="Онлайн-утилиты для администраторов, внедренцев и программистов 1С: проверка платформы, лента релизов, оценка задач и другие." og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% collection_page_schema_tag "Инструменты для разработчиков 1С" "Онлайн-утилиты для специалистов 1С:Предприятие 8." as tools_schema %}
+<script type="application/ld+json">{{ tools_schema|json_ld }}</script>
+{% endblock %}
+
+{% block body %}
+{% include 'includes/site_header.html' with active_nav='tools' %}
+
+<main class="calc-page">
+    <section class="section calc-hero">
+        <div class="container">
+            <div class="section__head section__head--center">
+                <span class="section__tag">Утилиты 1С</span>
+                <h1 class="section__title">Инструменты для разработчиков 1С</h1>
+                <p class="section__desc">
+                    Бесплатные онлайн-утилиты для администраторов, внедренцев и программистов
+                    1С:Предприятие 8 — с оценкой стоимости работ при необходимости.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt">
+        <div class="container">
+            <div class="tools-grid">
+                {% for tool in tools %}
+                <a href="{% url tool.url_name %}" class="tools-card">
+                    <span class="tools-card__tag">{{ tool.tag }}</span>
+                    <h2 class="tools-card__title">{{ tool.name }}</h2>
+                    <p class="tools-card__desc">{{ tool.description }}</p>
+                </a>
+                {% endfor %}
+                <a href="{% url 'landing:update_calculator' %}" class="tools-card">
+                    <span class="tools-card__tag">Обновления</span>
+                    <h2 class="tools-card__title">Калькулятор обновлений 1С</h2>
+                    <p class="tools-card__desc">Цепочка промежуточных релизов и ориентировочная стоимость обновления.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer footer--simple">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ SITE_NAME }} · <a href="{% url 'landing:index' %}">На главную</a></p>
+    </div>
+</footer>
+{% endblock %}

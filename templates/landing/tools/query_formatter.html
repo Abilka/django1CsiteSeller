@@ -1,0 +1,34 @@
+{% extends 'landing/tools/base_tool.html' %}
+
+{% block tool_content %}
+<form class="calc-form" method="post">
+    {% csrf_token %}
+    <div class="form-field">
+        <label class="form-label" for="query">Текст запроса</label>
+        <textarea class="form-textarea form-textarea--code" name="query" id="query" rows="14"
+            placeholder="ВЫБРАТЬ&#10;    Номенклатура.Ссылка КАК Ссылка&#10;ИЗ&#10;    Справочник.Номенклатура КАК Номенклатура">{{ source_query }}</textarea>
+    </div>
+    <button type="submit" class="btn btn--primary">Отформатировать</button>
+</form>
+
+{% if result %}
+{% if result.warnings %}
+<div class="calc-result calc-result--error" role="alert">
+    <strong>Предупреждения</strong>
+    <ul class="calc-chain">
+        {% for warning in result.warnings %}
+        <li>{{ warning }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if result.formatted %}
+<div class="calc-result calc-result--success">
+    <strong>Отформатированный запрос</strong>
+    <pre class="query-output"><code>{{ result.formatted }}</code></pre>
+    <p class="calc-result__hint">Строк: {{ result.line_count }}</p>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

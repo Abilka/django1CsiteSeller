@@ -2,8 +2,22 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 from .forms import LeadRequestForm
-from .models import OneCConfiguration, PriceListItem, SiteSettings, TeamMember, TypicalTask
+from .models import (
+    MigrationPath,
+    OneCConfiguration,
+    PriceListItem,
+    SiteSettings,
+    TeamMember,
+    TypicalTask,
+)
 from .services.update_calculator import UpdatePathError, calculate_update_path
+from .tool_context import build_tool_context
+from .tools.migration_calc import estimate_migration
+from .tools.platform_check import PlatformCheckError, check_platform_compatibility
+from .tools.query_formatter import format_query
+from .tools.registry import list_tools
+from .tools.release_feed import get_feed_configurations, get_release_feed
+from .tools.task_estimator import estimate_tasks
 
 
 @require_http_methods(['GET', 'POST'])
@@ -102,3 +116,159 @@ def user_agreement(request):
 
 def privacy_policy(request):
     return render(request, 'landing/privacy_policy.html')
+
+
+def tools_index(request):
+    return render(request, 'landing/tools/index.html', {
+        'tools': list_tools(),
+    })
+
+
+@require_http_methods(['GET', 'POST'])
+def platform_check(request):
+    settings = SiteSettings.load()
+    configurations = OneCConfiguration.objects.filter(is_published=True).prefetch_related('releases')
+    selected_config = None
+    platform_version = ''
+    target_release = ''
+    current_release = ''
+    result = None
+    error = None
+    releases = []
+
+    if request.method == 'POST':
+        config_slug = request.POST.get('configuration', '')
+        platform_version = request.POST.get('platform_version', '').strip()
+        target_release = request.POST.get('target_release', '').strip()
+        current_release = request.POST.get('current_release', '').strip()
+        selected_config = configurations.filter(slug=config_slug).first()
+
+        if not selected_config:
+            error = 'Выберите конфигурацию.'
+        elif not platform_version:
+            error = 'Укажите версию платформы.'
+        else:
+            try:
+                result = check_platform_compatibility(
+                    selected_config,
+                    platform_version,
+                    target_release or None,
+                    current_release or None,
+                )
+            except PlatformCheckError as exc:
+                error = str(exc)
+    else:
+        config_slug = request.GET.get('configuration', '')
+        if config_slug:
+            selected_config = configurations.filter(slug=config_slug).first()
+
+    if selected_config:
+        releases = list(
+            selected_config.releases.order_by('sort_order', '-release_date', '-id')
+            .values('version', 'min_platform')
+        )
+
+    return render(request, 'landing/tools/platform_check.html', build_tool_context(
+        'platform-check',
+        settings=settings,
+        configurations=configurations,
+        selected_config=selected_config,
+        platform_version=platform_version,
+        target_release=target_release,
+        current_release=current_release,
+        releases=releases,
+        result=result,
+        error=error,
+    ))
+
+
+def release_feed(request):
+    days = int(request.GET.get('days', '90') or 90)
+    config_slug = request.GET.get('configuration', '').strip()
+    items = get_release_feed(days=days, configuration_slug=config_slug or None)
+    return render(request, 'landing/tools/release_feed.html', build_tool_context(
+        'release-feed',
+        items=items,
+        configurations=get_feed_configurations(),
+        selected_days=days,
+        selected_config=config_slug,
+    ))
+
+
+@require_http_methods(['GET', 'POST'])
+def task_estimator(request):
+    settings = SiteSettings.load()
+    typical_tasks = TypicalTask.objects.filter(is_published=True)
+    price_items = PriceListItem.objects.filter(is_published=True)
+    result = None
+    selected_typical_ids: list[int] = []
+    selected_price_ids: list[int] = []
+
+    if request.method == 'POST':
+        selected_typical_ids = [int(pk) for pk in request.POST.getlist('typical_tasks') if pk.isdigit()]
+        selected_price_ids = [int(pk) for pk in request.POST.getlist('price_items') if pk.isdigit()]
+        if not selected_typical_ids and not selected_price_ids:
+            result = None
+        else:
+            result = estimate_tasks(selected_typical_ids, selected_price_ids)
+
+    price_by_category = {}
+    for item in price_items:
+        price_by_category.setdefault(item.category, []).append(item)
+
+    return render(request, 'landing/tools/task_estimator.html', build_tool_context(
+        'task-estimator',
+        settings=settings,
+        typical_tasks=typical_tasks,
+        price_by_category=price_by_category,
+        price_categories=PriceListItem.Category.choices,
+        result=result,
+        selected_typical_ids=selected_typical_ids,
+        selected_price_ids=selected_price_ids,
+    ))
+
+
+@require_http_methods(['GET', 'POST'])
+def query_formatter(request):
+    source_query = ''
+    result = None
+
+    if request.method == 'POST':
+        source_query = request.POST.get('query', '')
+        result = format_query(source_query)
+
+    return render(request, 'landing/tools/query_formatter.html', build_tool_context(
+        'query-formatter',
+        source_query=source_query,
+        result=result,
+    ))
+
+
+@require_http_methods(['GET', 'POST'])
+def migration_calculator(request):
+    settings = SiteSettings.load()
+    paths = MigrationPath.objects.filter(is_published=True).prefetch_related('steps')
+    selected_path = None
+    result = None
+    error = None
+
+    if request.method == 'POST':
+        path_slug = request.POST.get('migration_path', '')
+        selected_path = paths.filter(slug=path_slug).first()
+        if not selected_path:
+            error = 'Выберите маршрут миграции.'
+        else:
+            result = estimate_migration(selected_path)
+    else:
+        path_slug = request.GET.get('path', '')
+        if path_slug:
+            selected_path = paths.filter(slug=path_slug).first()
+
+    return render(request, 'landing/tools/migration_calculator.html', build_tool_context(
+        'migration-calc',
+        settings=settings,
+        paths=paths,
+        selected_path=selected_path,
+        result=result,
+        error=error,
+    ))

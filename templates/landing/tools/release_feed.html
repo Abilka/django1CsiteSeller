@@ -1,0 +1,52 @@
+{% extends 'landing/tools/base_tool.html' %}
+
+{% block tool_content %}
+<form class="calc-form tool-filters" method="get">
+    <div class="calc-form__grid">
+        <div class="form-field">
+            <label class="form-label" for="days">Период, дней</label>
+            <select class="form-select" name="days" id="days">
+                <option value="30" {% if selected_days == 30 %}selected{% endif %}>30</option>
+                <option value="90" {% if selected_days == 90 %}selected{% endif %}>90</option>
+                <option value="180" {% if selected_days == 180 %}selected{% endif %}>180</option>
+                <option value="365" {% if selected_days == 365 %}selected{% endif %}>365</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label class="form-label" for="configuration">Конфигурация</label>
+            <select class="form-select" name="configuration" id="configuration">
+                <option value="">— Все конфигурации —</option>
+                {% for config in configurations %}
+                <option value="{{ config.slug }}" {% if selected_config == config.slug %}selected{% endif %}>
+                    {{ config.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn--primary">Применить фильтр</button>
+    <a href="{% url 'landing:release_feed_rss' %}" class="btn btn--ghost btn--sm">RSS-лента</a>
+</form>
+
+{% if items %}
+<div class="release-feed">
+    {% for item in items %}
+    <article class="release-feed__item">
+        <div class="release-feed__meta">
+            {% if item.release_date %}<time datetime="{{ item.release_date|date:'Y-m-d' }}">{{ item.release_date|date:'d.m.Y' }}</time>{% endif %}
+            <span class="release-feed__config">{{ item.configuration_name }}</span>
+        </div>
+        <h2 class="release-feed__version">Релиз {{ item.version }}</h2>
+        {% if item.min_platform %}
+        <p class="release-feed__platform">Мин. платформа: <code>{{ item.min_platform }}</code></p>
+        {% endif %}
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="calc-result">
+    <strong>Релизов не найдено</strong>
+    <p>За выбранный период новых релизов нет. Попробуйте увеличить период или сбросить фильтр.</p>
+</div>
+{% endif %}
+{% endblock %}

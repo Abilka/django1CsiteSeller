@@ -1,0 +1,65 @@
+{% extends 'landing/tools/base_tool.html' %}
+{% load humanize landing_extras %}
+
+{% block tool_content %}
+<form class="calc-form" method="post">
+    {% csrf_token %}
+    <div class="task-estimator">
+        <div class="task-estimator__group">
+            <h2 class="task-estimator__title">Типовые задачи</h2>
+            {% for task in typical_tasks %}
+            <label class="task-estimator__item">
+                <input type="checkbox" name="typical_tasks" value="{{ task.pk }}"
+                    {% if task.pk in selected_typical_ids %}checked{% endif %}>
+                <span class="task-estimator__label">
+                    <strong>{{ task.title }}</strong>
+                    <span>{{ task.estimated_hours }} ч · ~{{ task.price_display|format_price }} ₽</span>
+                </span>
+            </label>
+            {% empty %}
+            <p>Типовые задачи пока не добавлены.</p>
+            {% endfor %}
+        </div>
+
+        {% for category_code, category_label in price_categories %}
+        {% with category_items=price_by_category|get_item:category_code %}
+        {% if category_items %}
+        <div class="task-estimator__group">
+            <h2 class="task-estimator__title">{{ category_label }}</h2>
+            {% for item in category_items %}
+            <label class="task-estimator__item">
+                <input type="checkbox" name="price_items" value="{{ item.pk }}"
+                    {% if item.pk in selected_price_ids %}checked{% endif %}>
+                <span class="task-estimator__label">
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ item.hours_display }} · {{ item.price_display }}</span>
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn btn--primary">Рассчитать стоимость</button>
+</form>
+
+{% if result %}
+<div class="calc-result calc-result--success">
+    <strong>Ориентировочная оценка</strong>
+    <ul class="calc-chain">
+        {% for item in result.items %}
+        <li>{{ item.title }} — {{ item.hours }} ч (~{{ item.price|format_price }} ₽)</li>
+        {% endfor %}
+    </ul>
+    <div class="calc-pricing">
+        <div class="calc-pricing__row calc-pricing__row--total">
+            <span>Итого</span>
+            <strong>{{ result.total_hours }} ч · ~{{ result.total_price|format_price }} ₽</strong>
+        </div>
+        <p class="calc-pricing__formula">Ставка: {{ result.hourly_rate|format_price }} ₽/ч</p>
+    </div>
+    <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Оставить заявку с этой оценкой</a>
+</div>
+{% endif %}
+{% endblock %}

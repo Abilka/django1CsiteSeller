@@ -1,0 +1,52 @@
+{% extends 'landing/tools/base_tool.html' %}
+{% load humanize landing_extras %}
+
+{% block tool_content %}
+<form class="calc-form" method="post">
+    {% csrf_token %}
+    <div class="form-field">
+        <label class="form-label" for="migration_path">Маршрут миграции</label>
+        <select class="form-select" name="migration_path" id="migration_path" required>
+            <option value="">— Выберите маршрут —</option>
+            {% for path in paths %}
+            <option value="{{ path.slug }}" {% if selected_path and selected_path.slug == path.slug %}selected{% endif %}>
+                {{ path.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn--primary">Рассчитать миграцию</button>
+</form>
+
+{% if error %}
+<div class="calc-result calc-result--error" role="alert">
+    <strong>Ошибка</strong>
+    <p>{{ error }}</p>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="calc-result calc-result--success">
+    <strong>{{ result.path_name }}</strong>
+    <p class="calc-result__intro">{{ result.source_name }} → {{ result.target_name }}</p>
+    {% if result.description %}<p>{{ result.description }}</p>{% endif %}
+    <ol class="calc-chain">
+        {% for step in result.steps %}
+        <li>
+            <strong>{{ step.title }}</strong>
+            {% if step.description %} — {{ step.description }}{% endif %}
+            ({{ step.estimated_hours }} ч, ~{{ step.estimated_price|format_price }} ₽)
+        </li>
+        {% endfor %}
+    </ol>
+    <div class="calc-pricing">
+        <div class="calc-pricing__row calc-pricing__row--total">
+            <span>Итого</span>
+            <strong>{{ result.total_hours }} ч · ~{{ result.total_price|format_price }} ₽</strong>
+        </div>
+        <p class="calc-pricing__formula">Ставка: {{ result.hourly_rate|format_price }} ₽/ч</p>
+    </div>
+    <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Обсудить миграцию</a>
+</div>
+{% endif %}
+{% endblock %}
