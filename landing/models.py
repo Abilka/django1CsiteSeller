@@ -59,9 +59,9 @@ class SiteSettings(models.Model):
         help_text='По умолчанию заявки, попавшие в антиспам, скрыты в списке заявок.',
     )
     freesc_auto_sync_enabled = models.BooleanField(
-        'Автосинхронизация релизов с freesc.ru',
+        'Автосинхронизация релизов с ИТС',
         default=True,
-        help_text='Периодически загружать релизы с freesc.ru в калькулятор.',
+        help_text='Периодически загружать релизы с its.1c.ru/db/updinfo в калькулятор.',
     )
     freesc_sync_interval_days = models.PositiveSmallIntegerField(
         'Интервал синхронизации, дней',
@@ -338,6 +338,12 @@ class OneCConfiguration(models.Model):
     name = models.CharField('Название', max_length=200)
     is_published = models.BooleanField('Показывать в калькуляторе', default=True)
     sort_order = models.PositiveSmallIntegerField('Порядок', default=0)
+    its_doc_id = models.PositiveIntegerField(
+        'ID раздела на ИТС',
+        null=True,
+        blank=True,
+        help_text='Идентификатор раздела на its.1c.ru/db/updinfo.',
+    )
 
     class Meta:
         verbose_name = 'Конфигурация 1С'
@@ -376,6 +382,17 @@ class OneCRelease(models.Model):
         'Порядок (меньше = новее)',
         default=0,
         help_text='0 — самый новый релиз в конфигурации.',
+    )
+    its_doc_id = models.PositiveIntegerField(
+        'ID версии на ИТС',
+        null=True,
+        blank=True,
+        help_text='Идентификатор страницы «Новое в версии» на its.1c.ru/db/updinfo.',
+    )
+    its_url = models.URLField(
+        'Ссылка на описание изменений ИТС',
+        blank=True,
+        max_length=255,
     )
 
     class Meta:

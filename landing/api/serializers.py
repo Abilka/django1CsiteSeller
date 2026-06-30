@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from landing.models import OneCConfiguration, OneCRelease
-from landing.services.update_calculator import normalize_version, parse_from_versions
+from landing.services.version_utils import normalize_version, parse_from_versions
 
 
 class OneCReleaseSerializer(serializers.ModelSerializer):
@@ -18,6 +18,8 @@ class OneCReleaseSerializer(serializers.ModelSerializer):
             'from_versions',
             'min_platform',
             'sort_order',
+            'its_doc_id',
+            'its_url',
         )
         read_only_fields = ('id',)
 
@@ -85,12 +87,17 @@ class CalculateUpdateSerializer(serializers.Serializer):
         return version
 
 
+class ChainStepSerializer(serializers.Serializer):
+    version = serializers.CharField()
+    url = serializers.URLField(allow_blank=True, required=False)
+
+
 class UpdatePathResultSerializer(serializers.Serializer):
     configuration_slug = serializers.CharField()
     configuration_name = serializers.CharField()
     current_version = serializers.CharField()
     latest_version = serializers.CharField()
-    chain = serializers.ListField(child=serializers.CharField())
+    chain = ChainStepSerializer(many=True)
     min_platform = serializers.CharField()
     is_up_to_date = serializers.BooleanField()
     steps_count = serializers.IntegerField()

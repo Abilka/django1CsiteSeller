@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from landing.models import OneCConfiguration, OneCRelease
-from landing.services.update_calculator import UpdatePathError, calculate_update_path
+from landing.services.update_calculator import UpdatePathError, UpdatePathResult, calculate_update_path
 
 from .serializers import (
     CalculateUpdateSerializer,
@@ -14,6 +14,15 @@ from .serializers import (
     OneCReleaseSerializer,
     UpdatePathResultSerializer,
 )
+
+
+def _serialize_update_result(result: UpdatePathResult) -> dict:
+    payload = result.__dict__.copy()
+    payload['chain'] = [
+        {'version': step.version, 'url': step.url}
+        for step in result.chain
+    ]
+    return payload
 
 
 class OneCConfigurationViewSet(viewsets.ModelViewSet):
@@ -55,7 +64,7 @@ class OneCConfigurationViewSet(viewsets.ModelViewSet):
             result = calculate_update_path(configuration, current_version)
         except UpdatePathError as exc:
             return Response({'detail': str(exc), 'code': exc.code}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(UpdatePathResultSerializer(result.__dict__).data)
+        return Response(UpdatePathResultSerializer(_serialize_update_result(result)).data)
 
 
 class OneCReleaseViewSet(viewsets.ModelViewSet):
@@ -98,7 +107,7 @@ class CalculateUpdateView(APIView):
         except UpdatePathError as exc:
             return Response({'detail': str(exc), 'code': exc.code}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(UpdatePathResultSerializer(result.__dict__).data)
+        return Response(UpdatePathResultSerializer(_serialize_update_result(result)).data)
 
     def _resolve_configuration(self, ref: str) -> OneCConfiguration | None:
         if ref.isdigit():

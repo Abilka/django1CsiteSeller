@@ -21,10 +21,11 @@ class UpdateCalculatorServiceTests(TestCase):
         self.configuration.releases.all().delete()
         releases = [
             ('11.5.27.52', 0, ['11.5.22.186', '11.5.27.50'], '8.3.27.1859'),
-            ('11.5.22.186', 1, ['11.5.17.234'], '8.3.27.1559'),
-            ('11.5.17.234', 2, ['11.5.12.270'], '8.3.27.1559'),
-            ('11.5.12.270', 3, ['11.5.12.251'], '8.3.27.1559'),
-            ('11.5.12.251', 4, [], ''),
+            ('11.5.27.50', 1, ['11.5.22.186'], '8.3.27.1859'),
+            ('11.5.22.186', 2, ['11.5.17.234'], '8.3.27.1559'),
+            ('11.5.17.234', 3, ['11.5.12.270'], '8.3.27.1559'),
+            ('11.5.12.270', 4, ['11.5.12.251'], '8.3.27.1559'),
+            ('11.5.12.251', 5, [], ''),
         ]
         for version, sort_order, from_versions, platform in releases:
             OneCRelease.objects.create(
@@ -33,14 +34,16 @@ class UpdateCalculatorServiceTests(TestCase):
                 from_versions=from_versions,
                 min_platform=platform,
                 sort_order=sort_order,
+                its_url=f'https://its.1c.ru/db/updinfo/content/{1000 + sort_order}/hdoc',
             )
 
     def test_build_chain_from_old_release(self):
         result = calculate_update_path(self.configuration, '11.5.12.251')
         self.assertEqual(
-            result.chain,
+            [step.version for step in result.chain],
             ['11.5.12.270', '11.5.17.234', '11.5.22.186', '11.5.27.52'],
         )
+        self.assertTrue(all(step.url for step in result.chain))
         self.assertEqual(result.min_platform, '8.3.27.1859')
         self.assertFalse(result.is_up_to_date)
         self.assertEqual(result.steps_count, 4)
@@ -67,7 +70,7 @@ class UpdateCalculatorServiceTests(TestCase):
 
     def test_one_step_to_latest(self):
         result = calculate_update_path(self.configuration, '11.5.27.50')
-        self.assertEqual(result.chain, ['11.5.27.52'])
+        self.assertEqual([step.version for step in result.chain], ['11.5.27.52'])
 
     def test_no_path_raises(self):
         infos = [
@@ -75,7 +78,7 @@ class UpdateCalculatorServiceTests(TestCase):
             ReleaseInfo('1.0.0', set(), ''),
         ]
         with self.assertRaises(UpdatePathError):
-            build_update_chain(infos, '9.9.9.9')
+            build_update_chain('rel_1c_ut11', infos, '9.9.9.9')
 
 
 class UpdateCalculatorAPITests(APITestCase):
@@ -106,7 +109,10 @@ class UpdateCalculatorAPITests(APITestCase):
             'current_version': '3.0.58.41',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['chain'], ['3.0.60.34'])
+        self.assertEqual(response.data['chain'], [{
+            'version': '3.0.60.34',
+            'url': '',
+        }])
         self.assertEqual(response.data['steps_count'], 1)
         self.assertEqual(response.data['estimated_hours'], '0.50')
         self.assertIn('estimated_price', response.data)

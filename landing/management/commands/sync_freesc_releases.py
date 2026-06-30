@@ -1,25 +1,19 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from landing.models import OneCConfiguration, ReleaseSyncLog, SiteSettings
-from landing.services.freesc_sync import (
-    is_sync_due,
-    sync_all_from_freesc,
-    sync_releases_for_configuration,
-)
+from landing.models import ReleaseSyncLog, SiteSettings
+from landing.services.its_sync import sync_all_from_its, sync_releases_for_configuration
+from landing.services.freesc_sync import is_sync_due
 
 
 class Command(BaseCommand):
-    help = (
-        'Синхронизация конфигураций и релизов 1С с freesc.ru '
-        '(калькулятор и список релизов).'
-    )
+    help = 'Синхронизация конфигураций и релизов 1С с its.1c.ru/db/updinfo.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--all',
             action='store_true',
-            help='Синхронизировать все конфигурации из базы',
+            help='Синхронизировать все конфигурации с привязкой к ИТС',
         )
         parser.add_argument(
             '--config',
@@ -29,7 +23,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--sync-configs',
             action='store_true',
-            help='Обновить список конфигураций со страницы калькулятора freesc.ru',
+            help='Обновить список конфигураций с its.1c.ru/db/updinfo',
         )
         parser.add_argument(
             '--dry-run',
@@ -39,7 +33,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--prune',
             action='store_true',
-            help='Удалить релизы, которых нет на freesc.ru',
+            help='Удалить релизы, которых нет на ИТС',
         )
         parser.add_argument(
             '--force',
@@ -66,7 +60,7 @@ class Command(BaseCommand):
             )
 
         sync_configs = options['sync_configs'] or options['all'] or options['force']
-        report = sync_all_from_freesc(
+        report = sync_all_from_its(
             sync_configs=sync_configs,
             dry_run=False,
             prune=options['prune'],
@@ -101,7 +95,7 @@ class Command(BaseCommand):
 
     def _run_dry_run(self, options):
         slugs = [options['config_slug']] if options.get('config_slug') else None
-        report = sync_all_from_freesc(
+        report = sync_all_from_its(
             slugs=slugs,
             sync_configs=options.get('sync_configs') or options.get('all') or not slugs,
             dry_run=True,
@@ -111,6 +105,8 @@ class Command(BaseCommand):
         self._print_report(report)
 
     def _sync_single(self, slug: str, prune: bool):
+        from landing.models import OneCConfiguration
+
         configuration = OneCConfiguration.objects.filter(slug=slug).first()
         if configuration is None:
             raise CommandError(f'Конфигурация «{slug}» не найдена.')
@@ -122,13 +118,13 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'{configuration.name}: создано {detail.created}, '
             f'обновлено {detail.updated}, удалено {detail.deleted}, '
-            f'всего на freesc.ru: {detail.total_fetched}.',
+            f'всего на ИТС: {detail.total_fetched}.',
         ))
 
     def _print_report(self, report):
         if report.configs_created or report.configs_updated:
             self.stdout.write(
-                f'Конфигурации freesc.ru: +{report.configs_created} / ~{report.configs_updated}',
+                f'Конфигурации ИТС: +{report.configs_created} / ~{report.configs_updated}',
             )
         for detail in report.details:
             if detail.error:

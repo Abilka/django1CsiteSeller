@@ -1174,6 +1174,11 @@ select.form-control { cursor: pointer; }
     gap: 8px;
 }
 .calc-chain li { color: var(--color-text); }
+.calc-chain a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+.calc-chain a:hover { text-decoration: underline; }
 .calc-pricing {
     margin-top: 20px;
     padding: 16px 20px;

@@ -70,14 +70,14 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 'она не связана с уведомлениями о заявках.'
             ),
         }),
-        ('Синхронизация релизов freesc.ru', {
+        ('Синхронизация релизов 1С:ИТС', {
             'fields': (
                 'freesc_auto_sync_enabled',
                 'freesc_sync_interval_days',
                 'freesc_last_sync_at',
             ),
             'description': (
-                'Автоматическая загрузка релизов с freesc.ru. '
+                'Автоматическая загрузка релизов с its.1c.ru/db/updinfo. '
                 'Планировщик включается переменной окружения FREESC_RUN_SCHEDULER=1 '
                 '(проверка каждые 6 часов, синхронизация — по интервалу в днях).'
             ),

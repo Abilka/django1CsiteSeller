@@ -87,8 +87,15 @@
                     до актуального <code>{{ result.latest_version }}</code> установите ключевые обновления:
                 </p>
                 <ol class="calc-chain">
-                    {% for version in result.chain %}
-                    <li>обновление <strong>{{ version }}</strong></li>
+                    {% for step in result.chain %}
+                    <li>
+                        обновление
+                        {% if step.url %}
+                        <a href="{{ step.url }}" target="_blank" rel="noopener noreferrer"><strong>{{ step.version }}</strong></a>
+                        {% else %}
+                        <strong>{{ step.version }}</strong>
+                        {% endif %}
+                    </li>
                     {% endfor %}
                 </ol>
                 <div class="calc-pricing">

@@ -42,7 +42,7 @@ def start_freesc_scheduler() -> None:
     )
     scheduler.start()
     _scheduler_started = True
-    logger.info('Планировщик синхронизации freesc.ru запущен (проверка каждые %s ч).', interval_days)
+    logger.info('Планировщик синхронизации ИТС запущен (проверка каждые %s ч).', interval_days)
 
 
 def _scheduled_sync_job() -> None:
@@ -51,8 +51,8 @@ def _scheduled_sync_job() -> None:
     try:
         log = run_scheduled_sync(force=False)
         if log:
-            logger.info('Синхронизация freesc.ru завершена: %s', log.message)
+            logger.info('Синхронизация ИТС завершена: %s', log.message)
         else:
-            logger.debug('Синхронизация freesc.ru пока не требуется.')
+            logger.debug('Синхронизация ИТС пока не требуется.')
     except Exception:
-        logger.exception('Ошибка автосинхронизации релизов freesc.ru')
+        logger.exception('Ошибка автосинхронизации релизов с ИТС')

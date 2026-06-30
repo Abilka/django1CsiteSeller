@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from landing.services.update_calculator import normalize_version
+from landing.services.version_utils import normalize_version
 
 VERSION_RE = re.compile(r'^\d+(?:\.\d+)*$')
 
