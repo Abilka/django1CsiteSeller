@@ -1,0 +1,4 @@
+{% load seo_tags %}
+{% for schema in seo_global_schemas %}
+<script type="application/ld+json">{{ schema|json_ld }}</script>
+{% endfor %}

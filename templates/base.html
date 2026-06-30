@@ -5,9 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
-    <meta name="description" content="{% block meta_description %}Профессиональная настройка, доработка и интеграция 1С 8.3. Оценка стоимости и сроков до начала работ.{% endblock %}">
-    {% if canonical_url %}<link rel="canonical" href="{% block canonical_url %}{{ canonical_url }}{% endblock %}">{% endif %}
-    <title>{% block title %}{{ SITE_NAME }} — настройка и разработка 1С{% endblock %}</title>
+    <meta name="theme-color" content="#0f172a">
+    {% if canonical_url %}<link rel="canonical" href="{% block canonical_href %}{{ canonical_url }}{% endblock %}">{% endif %}
+    {% block seo_head %}
+    {% include 'includes/seo_head.html' with page_title=SITE_DEFAULT_TITLE meta_description=SEO_DEFAULT_DESCRIPTION og_type='website' og_image=SEO_OG_IMAGE %}
+    {% endblock %}
+    {% include 'includes/seo_global_schema.html' %}
+    {% block schema_json_ld %}{% endblock %}
+    <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
     {% if settings.favicon %}<link rel="icon" href="{{ settings.favicon.url }}">{% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

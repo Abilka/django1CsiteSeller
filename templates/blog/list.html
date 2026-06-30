@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
 {% load static humanize %}
 
-{% block title %}Блог о 1С — статьи и инструкции | {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Полезные статьи о настройке, доработке и обновлении 1С:Предприятие 8. Инструкции, советы и разбор типовых задач.{% endblock %}
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title=page_title meta_description=page_description og_type='website' og_image=SEO_OG_IMAGE schema_items=schema_items %}
+{% endblock %}
+
+{% block extra_head %}
+{% if pagination_prev %}<link rel="prev" href="{{ pagination_prev }}">{% endif %}
+{% if pagination_next %}<link rel="next" href="{{ pagination_next }}">{% endif %}
+{% endblock %}
 
 {% block body %}
 {% include 'includes/site_header.html' with active_nav='blog' %}

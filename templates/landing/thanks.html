@@ -1,10 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Спасибо за заявку — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Ваша заявка принята. Мы свяжемся с вами в ближайшее время.{% endblock %}
-
-{% block extra_head %}
-<meta name="robots" content="noindex, nofollow">
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title="Спасибо за заявку — "|add:SITE_NAME meta_description="Ваша заявка принята. Мы свяжемся с вами в ближайшее время." robots='noindex, nofollow' og_type='website' %}
 {% endblock %}
 
 {% block body %}

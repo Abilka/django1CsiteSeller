@@ -1,7 +1,14 @@
 {% extends 'landing/legal_base.html' %}
+{% load seo_tags %}
 
-{% block title %}Политика конфиденциальности — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Политика конфиденциальности {{ SITE_NAME }}: порядок сбора, использования и защиты персональных данных пользователей сайта.{% endblock %}
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title="Политика конфиденциальности — "|add:SITE_NAME meta_description="Политика конфиденциальности "|add:SITE_NAME|add:": порядок сбора, использования и защиты персональных данных пользователей сайта." og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% webpage_schema_tag "Политика конфиденциальности" "Политика конфиденциальности: порядок сбора, использования и защиты персональных данных пользователей сайта." as page_schema %}
+<script type="application/ld+json">{{ page_schema|json_ld }}</script>
+{% endblock %}
 
 {% block legal_content %}
 <h1 class="legal-doc__title">Политика конфиденциальности</h1>

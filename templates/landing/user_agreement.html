@@ -1,7 +1,14 @@
 {% extends 'landing/legal_base.html' %}
+{% load seo_tags %}
 
-{% block title %}Пользовательское соглашение — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Пользовательское соглашение сайта {{ SITE_NAME }}: условия использования сервиса и оказания услуг по настройке и разработке 1С.{% endblock %}
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title="Пользовательское соглашение — "|add:SITE_NAME meta_description="Пользовательское соглашение сайта "|add:SITE_NAME|add:": условия использования сервиса и оказания услуг по настройке и разработке 1С." og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% webpage_schema_tag "Пользовательское соглашение" "Пользовательское соглашение сайта: условия использования сервиса и оказания услуг по настройке и разработке 1С." as page_schema %}
+<script type="application/ld+json">{{ page_schema|json_ld }}</script>
+{% endblock %}
 
 {% block legal_content %}
 <h1 class="legal-doc__title">Пользовательское соглашение</h1>

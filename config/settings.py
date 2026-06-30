@@ -143,14 +143,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static', BASE_DIR / 'favicon']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
     },
 }
 
@@ -164,6 +168,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
 SITE_HOST = os.environ.get('SITE_HOST', '') or urlparse(SITE_URL).netloc
+SITE_NAME = os.environ.get('SITE_NAME', 'Тортуга Дев')
+SITE_DEFAULT_TITLE = os.environ.get(
+    'SITE_DEFAULT_TITLE',
+    '{site_name} — настройка и разработка 1С',
+)
+SEO_DEFAULT_DESCRIPTION = os.environ.get(
+    'SEO_DEFAULT_DESCRIPTION',
+    'Профессиональная настройка, доработка и интеграция 1С 8.3. '
+    'Оценка стоимости и сроков до начала работ.',
+)
 SITE_CONTACT_EMAIL = os.environ.get('SITE_CONTACT_EMAIL', '')
 YANDEX_METRICA_ID = os.environ.get('YANDEX_METRICA_ID', '').strip()
 GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', '').strip()

@@ -1,0 +1,28 @@
+{% load seo_tags %}
+<title>{{ page_title }}</title>
+<meta name="description" content="{{ meta_description }}">
+{% if robots %}<meta name="robots" content="{{ robots }}">{% endif %}
+
+<meta property="og:site_name" content="{{ SITE_NAME }}">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:type" content="{{ og_type|default:'website' }}">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ meta_description }}">
+{% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
+{% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+
+<meta name="twitter:card" content="{% if og_image %}summary_large_image{% else %}summary{% endif %}">
+<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:description" content="{{ meta_description }}">
+{% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
+
+{% if og_type == 'article' %}
+{% if article_published %}<meta property="article:published_time" content="{{ article_published }}">{% endif %}
+{% if article_modified %}<meta property="article:modified_time" content="{{ article_modified }}">{% endif %}
+{% endif %}
+
+{% if schema_items %}
+{% for schema in schema_items %}
+<script type="application/ld+json">{{ schema|json_ld }}</script>
+{% endfor %}
+{% endif %}

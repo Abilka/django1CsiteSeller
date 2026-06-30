@@ -1,5 +1,14 @@
 {% extends 'base.html' %}
-{% load static humanize landing_extras %}
+{% load static humanize landing_extras seo_tags %}
+
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title=SITE_DEFAULT_TITLE meta_description=SEO_DEFAULT_DESCRIPTION og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% professional_service_schema_tag SEO_DEFAULT_DESCRIPTION price_range="₽₽" as home_schema %}
+<script type="application/ld+json">{{ home_schema|json_ld }}</script>
+{% endblock %}
 
 {% block body %}
 {% include 'includes/site_header.html' %}

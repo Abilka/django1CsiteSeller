@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
-{% load static humanize landing_extras %}
+{% load static humanize landing_extras seo_tags %}
 
-{% block title %}Калькулятор обновлений 1С — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Определите последовательность установки промежуточных обновлений конфигураций 1С:Предприятие 8.{% endblock %}
+{% block seo_head %}
+{% include 'includes/seo_head.html' with page_title="Калькулятор обновлений 1С — "|add:SITE_NAME meta_description="Определите последовательность установки промежуточных обновлений конфигураций 1С:Предприятие 8." og_type='website' og_image=SEO_OG_IMAGE %}
+{% endblock %}
+
+{% block schema_json_ld %}
+{% software_application_schema_tag "Калькулятор обновлений 1С" "Определите последовательность установки промежуточных обновлений конфигураций 1С:Предприятие 8." as calc_schema %}
+<script type="application/ld+json">{{ calc_schema|json_ld }}</script>
+{% endblock %}
 
 {% block body %}
 {% include 'includes/site_header.html' with active_nav='calculator' %}
