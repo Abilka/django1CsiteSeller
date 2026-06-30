@@ -66,13 +66,16 @@ class LeadFormAntispamTests(TestCase):
         self.assertTrue(form.is_valid())
         self.assertTrue(form.is_bot)
 
-    def test_bot_submission_is_not_saved_by_view_logic(self):
+    def test_bot_submission_is_saved_as_honeypot(self):
         payload, issued_at = self._valid_payload(fax_number='+7 000')
         with patch('landing.antispam.time.time', return_value=issued_at + 5):
             form = LeadRequestForm(payload)
             self.assertTrue(form.is_valid())
             self.assertTrue(form.is_bot)
-        self.assertEqual(LeadRequest.objects.count(), 0)
+            lead = form.save_honeypot()
+        self.assertEqual(LeadRequest.objects.count(), 1)
+        self.assertTrue(lead.is_honeypot)
+        self.assertEqual(lead.name, 'Иван Петров')
 
     def test_real_submission_is_saved(self):
         payload, issued_at = self._valid_payload()

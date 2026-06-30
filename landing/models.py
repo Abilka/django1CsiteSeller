@@ -53,6 +53,11 @@ class SiteSettings(models.Model):
         'Дублировать заявки в Telegram',
         default=False,
     )
+    show_honeypot_leads = models.BooleanField(
+        'Показывать заявки из honeypot в админке',
+        default=False,
+        help_text='По умолчанию заявки, попавшие в антиспам, скрыты в списке заявок.',
+    )
     freesc_auto_sync_enabled = models.BooleanField(
         'Автосинхронизация релизов с freesc.ru',
         default=True,
@@ -312,6 +317,7 @@ class LeadRequest(models.Model):
     created_at = models.DateTimeField('Дата заявки', auto_now_add=True)
     is_processed = models.BooleanField('Обработана', default=False)
     telegram_sent = models.BooleanField('Отправлено в Telegram', default=False)
+    is_honeypot = models.BooleanField('Honeypot', default=False, db_index=True)
 
     class Meta:
         verbose_name = 'Заявка'

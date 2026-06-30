@@ -13,7 +13,9 @@ def index(request):
     if request.method == 'POST':
         form = LeadRequestForm(request.POST)
         if form.is_valid():
-            if not form.is_bot:
+            if form.is_bot:
+                form.save_honeypot()
+            else:
                 form.save()
             return redirect('landing:thanks')
     else:

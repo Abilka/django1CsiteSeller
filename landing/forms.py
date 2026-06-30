@@ -96,6 +96,25 @@ class LeadRequestForm(forms.ModelForm):
             instance.save()
         return instance
 
+    def save_honeypot(self):
+        def get(name: str) -> str:
+            return (self.data.get(self.add_prefix(name), '') or '').strip()
+
+        service = get('service')
+        if service not in dict(LeadRequest.ServiceCategory.choices):
+            service = LeadRequest.ServiceCategory.OTHER
+
+        lead = LeadRequest(
+            name=get('contact_name')[:120] or '—',
+            phone=get('phone')[:30] or '—',
+            email=get('email')[:254],
+            service=service,
+            message=get('message'),
+            is_honeypot=True,
+        )
+        lead.save()
+        return lead
+
     def clean_phone(self):
         phone = self.cleaned_data['phone']
         digits = re.sub(r'\D', '', phone)

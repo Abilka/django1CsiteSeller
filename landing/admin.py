@@ -47,6 +47,13 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         ('Контакты для клиентов', {
             'fields': ('contact_email', 'contact_phone', 'telegram_contact_url', 'max_contact_url'),
         }),
+        ('Заявки', {
+            'fields': ('show_honeypot_leads',),
+            'description': (
+                'Заявки, попавшие в honeypot (антиспам), сохраняются, но по умолчанию '
+                'скрыты в разделе «Заявки». Включите флаг, чтобы видеть их в списке.'
+            ),
+        }),
         ('Уведомления о заявках в Telegram', {
             'fields': (
                 'telegram_notify_enabled',
@@ -211,8 +218,26 @@ class LeadRequestAdmin(admin.ModelAdmin):
     list_filter = ('service', 'is_processed', 'telegram_sent', 'created_at')
     search_fields = ('name', 'phone', 'email', 'message')
     list_editable = ('is_processed',)
-    readonly_fields = ('created_at', 'telegram_sent')
+    readonly_fields = ('created_at', 'telegram_sent', 'is_honeypot')
     actions = ('resend_to_telegram',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not SiteSettings.load().show_honeypot_leads:
+            qs = qs.filter(is_honeypot=False)
+        return qs
+
+    def get_list_display(self, request):
+        columns = list(super().get_list_display(request))
+        if SiteSettings.load().show_honeypot_leads and 'is_honeypot' not in columns:
+            columns.insert(3, 'is_honeypot')
+        return columns
+
+    def get_list_filter(self, request):
+        filters = list(super().get_list_filter(request))
+        if SiteSettings.load().show_honeypot_leads and 'is_honeypot' not in filters:
+            filters = ('is_honeypot',) + tuple(filters)
+        return filters
 
     @admin.action(description='Повторно отправить в Telegram')
     def resend_to_telegram(self, request, queryset):
