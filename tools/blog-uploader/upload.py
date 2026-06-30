@@ -19,11 +19,10 @@
     Текст в Markdown...
 
 Slug формируется автоматически из title (транслитерация кириллицы).
-Поля keyword, category, description и slug во frontmatter игнорируются.
-Обложка необязательна: cover.jpg рядом с .md или <slug>.jpg.
+Поддерживаются .md и .txt (старый формат с SEO title/description в тексте).
 
-Токен создаётся командой:
-    python manage.py drf_create_token <username>
+Сначала можно привести папку к единому виду:
+    python normalize.py --input "C:\\path\\to\\articles" --output "C:\\path\\to\\normalized"
 
 Пример запуска:
     python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test
@@ -35,7 +34,6 @@ from __future__ import annotations
 
 import argparse
 import mimetypes
-import re
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -48,13 +46,11 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from slugify import slugify as make_slug
+    from article_parser import parse_article_file
 except ImportError:
-    print('Установите зависимость: pip install python-slugify', file=sys.stderr)
-    sys.exit(1)
+    from .article_parser import parse_article_file
 
 COVER_NAMES = ('cover.jpg', 'cover.jpeg', 'cover.png', 'cover.webp')
-FRONTMATTER_RE = re.compile(r'^---\r?\n(.*?)\r?\n---\r?\n', re.DOTALL)
 # Безопасный размер части для серверов с nginx client_max_body_size ~4K.
 CHUNK_MAX_BYTES = 1200
 DIRECT_UPLOAD_MAX_BYTES = 2500
@@ -80,7 +76,7 @@ def parse_args() -> argparse.Namespace:
         '--folder',
         required=True,
         type=Path,
-        help='Папка с .md файлами статей',
+        help='Папка с .md или .txt файлами статей',
     )
     parser.add_argument(
         '--dry-run',
@@ -101,60 +97,27 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
-    match = FRONTMATTER_RE.match(text)
-    if not match:
-        raise ValueError('Файл должен начинаться с YAML frontmatter (--- ... ---)')
+def load_article(md_path: Path, as_draft: bool) -> tuple[dict, str, Path | None]:
+    article = parse_article_file(md_path)
 
-    meta: dict[str, str] = {}
-    for line in match.group(1).splitlines():
-        line = line.strip()
-        if not line or line.startswith('#') or ':' not in line:
-            continue
-        key, _, value = line.partition(':')
-        meta[key.strip()] = _unquote(value.strip())
-
-    body = text[match.end():].lstrip('\r\n')
-    return meta, body
-
-
-def _unquote(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
-        return value[1:-1]
-    return value
-
-
-def normalize_meta(raw: dict[str, str], md_path: Path, as_draft: bool) -> dict:
-    title = raw.get('title', '').strip()
-    if not title:
-        raise ValueError(f'Поле "title" обязательно в {md_path.name}')
-
-    slug = make_slug(title, max_length=220)
-    if not slug:
-        raise ValueError(f'Не удалось сформировать slug из title в {md_path.name}')
-
-    is_published_raw = raw.get('is_published', '').strip().lower()
-    if is_published_raw in ('true', '1', 'yes'):
-        is_published = True
-    elif is_published_raw in ('false', '0', 'no'):
-        is_published = False
-    else:
-        is_published = not as_draft
-
+    is_published = not as_draft
     meta = {
-        'title': title,
-        'slug': slug,
-        'excerpt': _truncate(raw.get('excerpt', '').strip(), 5000),
-        'meta_title': _truncate(raw.get('meta_title', '').strip(), 70),
-        'meta_description': _truncate(raw.get('meta_description', '').strip(), 160),
+        'title': article.title,
+        'slug': article.slug,
+        'excerpt': '',
+        'meta_title': _truncate(article.meta_title, 70),
+        'meta_description': '',
         'is_published': is_published,
     }
 
-    published_at = raw.get('published_at', '').strip()
-    if published_at:
-        meta['published_at'] = published_at
+    cover_path = find_cover(md_path)
+    return meta, article.body, cover_path
 
-    return meta
+
+def _truncate(value: str, max_len: int) -> str:
+    if len(value) <= max_len:
+        return value
+    return value[: max_len - 1].rstrip() + '…'
 
 
 def find_cover(md_path: Path) -> Path | None:
@@ -167,23 +130,6 @@ def find_cover(md_path: Path) -> Path | None:
         if candidate.is_file():
             return candidate
     return None
-
-
-def load_article(md_path: Path, as_draft: bool) -> tuple[dict, str, Path | None]:
-    text = md_path.read_text(encoding='utf-8')
-    raw_meta, body = parse_frontmatter(text)
-    if not body.strip():
-        raise ValueError(f'Пустое тело статьи в {md_path.name}')
-
-    meta = normalize_meta(raw_meta, md_path, as_draft)
-    cover_path = find_cover(md_path)
-    return meta, body, cover_path
-
-
-def _truncate(value: str, max_len: int) -> str:
-    if len(value) <= max_len:
-        return value
-    return value[: max_len - 1].rstrip() + '…'
 
 
 def split_body(body: str, max_bytes: int = CHUNK_MAX_BYTES) -> list[str]:
@@ -340,13 +286,16 @@ def upload_article(
     return f'OK: {action} «{result.get("title", slug)}» → {result.get("url", slug)}'
 
 
-def iter_markdown_files(folder: Path) -> list[Path]:
+def iter_source_files(folder: Path) -> list[Path]:
     if not folder.is_dir():
         raise NotADirectoryError(f'Папка не найдена: {folder}')
-    md_files = sorted(folder.glob('*.md'))
-    if not md_files:
-        raise FileNotFoundError(f'В {folder} нет .md файлов')
-    return md_files
+    files = sorted(
+        path for path in folder.iterdir()
+        if path.is_file() and path.suffix.lower() in {'.md', '.txt'}
+    )
+    if not files:
+        raise FileNotFoundError(f'В {folder} нет .md или .txt файлов')
+    return files
 
 
 def make_session(token: str) -> requests.Session:
@@ -380,7 +329,7 @@ def main() -> int:
         return 1
 
     api_base = args.url.rstrip('/') + '/api/v1/blog'
-    md_files = iter_markdown_files(args.folder)
+    md_files = iter_source_files(args.folder)
     workers = min(args.workers, len(md_files))
 
     print(f'Статей: {len(md_files)}, потоков: {workers}')
