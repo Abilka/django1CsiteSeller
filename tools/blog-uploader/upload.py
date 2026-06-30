@@ -10,7 +10,6 @@
 Пример файла:
     ---
     title: "Заголовок статьи"
-    description: "SEO-описание для meta description и excerpt"
     keyword: "ключевое слово"
     category: "Категория"
     ---
@@ -20,7 +19,7 @@
     Текст в Markdown...
 
 Slug формируется автоматически из title (транслитерация кириллицы).
-Поля keyword, category и slug во frontmatter игнорируются.
+Поля keyword, category, description и slug во frontmatter игнорируются.
 Обложка необязательна: cover.jpg рядом с .md или <slug>.jpg.
 
 Токен создаётся командой:
@@ -29,7 +28,7 @@ Slug формируется автоматически из title (трансл�
 Пример запуска:
     python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test
     python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test --dry-run
-    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test --draft
+    python upload.py --url https://example.com --token YOUR_TOKEN --folder ./article_test --workers 6
 """
 
 from __future__ import annotations
@@ -38,6 +37,8 @@ import argparse
 import mimetypes
 import re
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 try:
@@ -57,6 +58,8 @@ FRONTMATTER_RE = re.compile(r'^---\r?\n(.*?)\r?\n---\r?\n', re.DOTALL)
 # Безопасный размер части для серверов с nginx client_max_body_size ~4K.
 CHUNK_MAX_BYTES = 1200
 DIRECT_UPLOAD_MAX_BYTES = 2500
+DEFAULT_WORKERS = 4
+_print_lock = threading.Lock()
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,6 +91,12 @@ def parse_args() -> argparse.Namespace:
         '--draft',
         action='store_true',
         help='Загрузить как черновик (is_published=false)',
+    )
+    parser.add_argument(
+        '--workers',
+        type=int,
+        default=DEFAULT_WORKERS,
+        help=f'Число параллельных загрузок статей (по умолчанию: {DEFAULT_WORKERS})',
     )
     return parser.parse_args()
 
@@ -123,7 +132,6 @@ def normalize_meta(raw: dict[str, str], md_path: Path, as_draft: bool) -> dict:
     slug = make_slug(title, max_length=220)
     if not slug:
         raise ValueError(f'Не удалось сформировать slug из title в {md_path.name}')
-    description = raw.get('description', '').strip()
 
     is_published_raw = raw.get('is_published', '').strip().lower()
     if is_published_raw in ('true', '1', 'yes'):
@@ -136,9 +144,9 @@ def normalize_meta(raw: dict[str, str], md_path: Path, as_draft: bool) -> dict:
     meta = {
         'title': title,
         'slug': slug,
-        'excerpt': _truncate(raw.get('excerpt', '').strip() or description, 5000),
+        'excerpt': _truncate(raw.get('excerpt', '').strip(), 5000),
         'meta_title': _truncate(raw.get('meta_title', '').strip(), 70),
-        'meta_description': _truncate(raw.get('meta_description', '').strip() or description, 160),
+        'meta_description': _truncate(raw.get('meta_description', '').strip(), 160),
         'is_published': is_published,
     }
 
@@ -341,24 +349,66 @@ def iter_markdown_files(folder: Path) -> list[Path]:
     return md_files
 
 
-def main() -> int:
-    args = parse_args()
-    api_base = args.url.rstrip('/') + '/api/v1/blog'
+def make_session(token: str) -> requests.Session:
     session = requests.Session()
     session.headers.update({
-        'Authorization': f'Token {args.token}',
+        'Authorization': f'Token {token}',
         'Accept': 'application/json',
     })
+    return session
 
+
+def upload_file(
+    md_path: Path,
+    api_base: str,
+    token: str,
+    as_draft: bool,
+    dry_run: bool,
+) -> str:
+    session = make_session(token)
+    try:
+        meta, body, cover_path = load_article(md_path, as_draft=as_draft)
+        return upload_article(session, api_base, meta, body, cover_path, dry_run)
+    finally:
+        session.close()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.workers < 1:
+        print('Параметр --workers должен быть >= 1', file=sys.stderr)
+        return 1
+
+    api_base = args.url.rstrip('/') + '/api/v1/blog'
+    md_files = iter_markdown_files(args.folder)
+    workers = min(args.workers, len(md_files))
+
+    print(f'Статей: {len(md_files)}, потоков: {workers}')
     errors = 0
-    for md_path in iter_markdown_files(args.folder):
-        try:
-            meta, body, cover_path = load_article(md_path, as_draft=args.draft)
-            message = upload_article(session, api_base, meta, body, cover_path, args.dry_run)
-            print(message)
-        except Exception as exc:
-            errors += 1
-            print(f'ОШИБКА [{md_path.name}]: {exc}', file=sys.stderr)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(
+                upload_file,
+                md_path,
+                api_base,
+                args.token,
+                args.draft,
+                args.dry_run,
+            ): md_path
+            for md_path in md_files
+        }
+        for future in as_completed(futures):
+            md_path = futures[future]
+            try:
+                message = future.result()
+            except Exception as exc:
+                errors += 1
+                with _print_lock:
+                    print(f'ОШИБКА [{md_path.name}]: {exc}', file=sys.stderr)
+            else:
+                with _print_lock:
+                    print(message)
 
     if errors:
         print(f'\nГотово с ошибками: {errors}', file=sys.stderr)

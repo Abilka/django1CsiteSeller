@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from blog.models import BlogPost
-from blog.services.indexnow import build_absolute_url, notify_indexnow
+from blog.services.indexnow import INDEXNOW_BATCH_SIZE, build_absolute_url, submit_urls_batched
 from config.sitemaps import StaticViewSitemap
 
 
@@ -21,7 +21,18 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('Нет URL для отправки'))
             return
 
-        if notify_indexnow(urls):
-            self.stdout.write(self.style.SUCCESS(f'IndexNow: отправлено {len(urls)} URL'))
+        result = submit_urls_batched(urls)
+        if result['batches_failed']:
+            self.stdout.write(self.style.ERROR(
+                f'IndexNow: {result["batches_failed"]} из {result["batches_total"]} '
+                f'пачек не удалось (по {INDEXNOW_BATCH_SIZE} URL)'
+            ))
+        elif result['batches_ok']:
+            self.stdout.write(self.style.SUCCESS(
+                f'IndexNow: отправлено {result["total"]} URL '
+                f'({result["batches_total"]} пачек по {INDEXNOW_BATCH_SIZE})'
+            ))
         else:
-            self.stdout.write(self.style.ERROR('IndexNow: отправка не удалась (проверьте SITE_URL и логи)'))
+            self.stdout.write(self.style.ERROR(
+                'IndexNow: отправка не удалась (проверьте SITE_URL и логи)'
+            ))

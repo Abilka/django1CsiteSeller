@@ -1,6 +1,5 @@
 ---
 title: "Пример статьи для загрузки"
-description: "Краткое SEO-описание статьи для meta description и excerpt."
 keyword: "пример ключевого слова"
 category: "1С для бизнеса"
 ---

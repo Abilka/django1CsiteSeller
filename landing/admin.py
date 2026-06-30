@@ -3,6 +3,12 @@ from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 
+from blog.models import BlogPost
+from blog.services.indexnow import (
+    INDEXNOW_BATCH_SIZE,
+    build_indexnow_admin_messages,
+    submit_blog_posts,
+)
 from .models import (
     Certificate,
     LeadRequest,
@@ -67,9 +73,24 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 '(проверка каждые 6 часов, синхронизация — по интервалу в днях).'
             ),
         }),
+        ('IndexNow', {
+            'fields': ('indexnow_submit_all_link',),
+            'description': (
+                f'Принудительная отправка URL опубликованных статей блога в IndexNow '
+                f'пачками по {INDEXNOW_BATCH_SIZE}. '
+                'Для выборочной отправки отметьте статьи в разделе «Статьи» и выберите '
+                f'действие «Отправить выбранные в IndexNow». '
+                'Требуются переменные SITE_URL, SITE_HOST и INDEXNOW_KEY.'
+            ),
+        }),
     )
 
-    readonly_fields = ('freesc_last_sync_at', 'favicon_preview', 'telegram_test_link')
+    readonly_fields = (
+        'freesc_last_sync_at',
+        'favicon_preview',
+        'telegram_test_link',
+        'indexnow_submit_all_link',
+    )
 
     def get_urls(self):
         urls = super().get_urls()
@@ -78,6 +99,11 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 'test-telegram/',
                 self.admin_site.admin_view(self.test_telegram_view),
                 name='landing_sitesettings_test_telegram',
+            ),
+            path(
+                'submit-indexnow/',
+                self.admin_site.admin_view(self.submit_indexnow_view),
+                name='landing_sitesettings_submit_indexnow',
             ),
         ]
         return custom_urls + urls
@@ -98,6 +124,21 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             messages.success(request, 'Тестовое сообщение отправлено в Telegram.')
         else:
             messages.error(request, f'Не удалось отправить: {error}')
+        return redirect('admin:landing_sitesettings_change', 1)
+
+    @admin.display(description='Отправка статей')
+    def indexnow_submit_all_link(self, obj):
+        url = reverse('admin:landing_sitesettings_submit_indexnow')
+        return format_html(
+            '<a class="button" href="{}">Отправить все опубликованные статьи в IndexNow</a>',
+            url,
+        )
+
+    def submit_indexnow_view(self, request):
+        posts = list(BlogPost.published.all())
+        result = submit_blog_posts(posts)
+        for level, text in build_indexnow_admin_messages(result):
+            getattr(messages, level)(request, text)
         return redirect('admin:landing_sitesettings_change', 1)
 
     @admin.display(description='Предпросмотр')
