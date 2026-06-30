@@ -8,7 +8,12 @@ from rest_framework.test import APITestCase
 
 from landing.models import MigrationPath, MigrationPathStep, OneCConfiguration, OneCRelease, PriceListItem, SiteSettings, TypicalTask
 from landing.tools.migration_calc import estimate_migration
-from landing.tools.platform_check import PlatformCheckError, check_platform_compatibility
+from landing.tools.platform_check import (
+    PlatformCheckError,
+    check_platform_compatibility,
+    get_known_platform_versions,
+    resolve_platform_version,
+)
 from landing.tools.query_formatter import format_query
 from landing.tools.release_feed import get_release_feed
 from landing.tools.task_estimator import estimate_tasks
@@ -43,6 +48,16 @@ class PlatformCheckTests(TestCase):
     def test_incompatible_platform(self):
         result = check_platform_compatibility(self.configuration, '8.3.24.1467')
         self.assertFalse(result.is_compatible)
+
+    def test_get_known_platform_versions(self):
+        versions = get_known_platform_versions()
+        self.assertIn('8.3.27.1859', versions)
+
+    def test_resolve_platform_version_custom(self):
+        self.assertEqual(
+            resolve_platform_version('__custom__', '8.3.24.100'),
+            '8.3.24.100',
+        )
 
     def test_missing_platform_raises(self):
         with self.assertRaises(PlatformCheckError):
@@ -138,6 +153,7 @@ class ToolsPageTests(TestCase):
     def test_platform_check_page(self):
         response = self.client.get(reverse('landing:platform_check'))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Выберите версию')
 
     def test_release_feed_rss(self):
         response = self.client.get(reverse('landing:release_feed_rss'))

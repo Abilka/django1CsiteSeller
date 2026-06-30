@@ -4,7 +4,9 @@ from dataclasses import dataclass
 
 from landing.models import OneCConfiguration, OneCRelease, SiteSettings
 from landing.services.update_calculator import UpdatePathError, calculate_update_path, normalize_version
-from landing.tools.version_utils import VersionFormatError, compare_versions
+from landing.tools.version_utils import VersionFormatError, compare_versions, parse_version_parts
+
+PLATFORM_VERSION_CUSTOM = '__custom__'
 
 
 class PlatformCheckError(Exception):
@@ -28,6 +30,37 @@ class PlatformCheckResult:
     estimated_update_price: int
     hourly_rate: int
     message: str
+
+
+def get_known_platform_versions() -> list[str]:
+    raw_versions = (
+        OneCRelease.objects.filter(configuration__is_published=True)
+        .exclude(min_platform='')
+        .values_list('min_platform', flat=True)
+    )
+    unique_versions: dict[str, list[int]] = {}
+    for raw in raw_versions:
+        version = normalize_version(raw).strip(';').strip()
+        if not version:
+            continue
+        try:
+            unique_versions[version] = parse_version_parts(version)
+        except VersionFormatError:
+            continue
+    return [
+        version
+        for version, _ in sorted(
+            unique_versions.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+    ]
+
+
+def resolve_platform_version(platform_version: str, platform_version_custom: str = '') -> str:
+    if platform_version == PLATFORM_VERSION_CUSTOM:
+        return normalize_version(platform_version_custom)
+    return normalize_version(platform_version)
 
 
 def _resolve_release(

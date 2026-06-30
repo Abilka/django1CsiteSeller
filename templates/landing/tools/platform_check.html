@@ -18,8 +18,24 @@
         </div>
         <div class="form-field">
             <label class="form-label" for="platform_version">Версия платформы</label>
-            <input class="form-input" type="text" name="platform_version" id="platform_version"
-                value="{{ platform_version }}" placeholder="8.3.27.1859" required>
+            <select class="form-select" name="platform_version" id="platform_version" required>
+                <option value="">— Выберите версию —</option>
+                {% for version in platform_versions %}
+                <option value="{{ version }}" {% if platform_version_select == version %}selected{% endif %}>
+                    {{ version }}
+                </option>
+                {% endfor %}
+                <option value="__custom__" {% if platform_version_select == '__custom__' %}selected{% endif %}>
+                    Другая версия…
+                </option>
+            </select>
+            <div class="form-field form-field--nested" id="platform_version_custom_wrap"
+                {% if platform_version_select != '__custom__' %}hidden{% endif %}>
+                <label class="form-label" for="platform_version_custom">Укажите версию вручную</label>
+                <input class="form-input" type="text" name="platform_version_custom" id="platform_version_custom"
+                    value="{{ platform_version_custom }}" placeholder="8.3.27.1859"
+                    {% if platform_version_select == '__custom__' %}required{% endif %}>
+            </div>
         </div>
         <div class="form-field">
             <label class="form-label" for="target_release">Целевой релиз</label>
@@ -46,7 +62,9 @@
             </select>
         </div>
     </div>
-    <button type="submit" class="btn btn--primary">Проверить совместимость</button>
+    <div class="calc-form__actions">
+        <button type="submit" class="btn btn--primary">Проверить совместимость</button>
+    </div>
 </form>
 
 {% if error %}
@@ -85,7 +103,9 @@
     {% if not result.is_compatible and result.update_steps_count %}
     <p class="calc-result__intro">Дополнительно: для обновления конфигурации потребуется {{ result.update_steps_count }} релиз(ов), ориентировочно ~{{ result.estimated_update_price|format_price }} ₽.</p>
     {% endif %}
-    <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Заказать обновление платформы</a>
+    <div class="calc-result__actions">
+        <a href="{% url 'landing:index' %}#contact" class="btn btn--outline btn--sm">Заказать обновление платформы</a>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

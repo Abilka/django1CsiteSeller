@@ -24,8 +24,10 @@
             </select>
         </div>
     </div>
-    <button type="submit" class="btn btn--primary">Применить фильтр</button>
-    <a href="{% url 'landing:release_feed_rss' %}" class="btn btn--ghost btn--sm">RSS-лента</a>
+    <div class="calc-form__actions">
+        <button type="submit" class="btn btn--primary">Применить фильтр</button>
+        <a href="{% url 'landing:release_feed_rss' %}" class="btn btn--ghost btn--sm">RSS-лента</a>
+    </div>
 </form>
 
 {% if items %}

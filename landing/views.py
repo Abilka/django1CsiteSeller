@@ -13,7 +13,13 @@ from .models import (
 from .services.update_calculator import UpdatePathError, calculate_update_path
 from .tool_context import build_tool_context
 from .tools.migration_calc import estimate_migration
-from .tools.platform_check import PlatformCheckError, check_platform_compatibility
+from .tools.platform_check import (
+    PlatformCheckError,
+    PLATFORM_VERSION_CUSTOM,
+    check_platform_compatibility,
+    get_known_platform_versions,
+    resolve_platform_version,
+)
 from .tools.query_formatter import format_query
 from .tools.registry import list_tools
 from .tools.release_feed import get_feed_configurations, get_release_feed
@@ -130,6 +136,9 @@ def platform_check(request):
     configurations = OneCConfiguration.objects.filter(is_published=True).prefetch_related('releases')
     selected_config = None
     platform_version = ''
+    platform_version_custom = ''
+    platform_version_select = ''
+    platform_versions = get_known_platform_versions()
     target_release = ''
     current_release = ''
     result = None
@@ -138,7 +147,9 @@ def platform_check(request):
 
     if request.method == 'POST':
         config_slug = request.POST.get('configuration', '')
-        platform_version = request.POST.get('platform_version', '').strip()
+        platform_version_select = request.POST.get('platform_version', '').strip()
+        platform_version_custom = request.POST.get('platform_version_custom', '').strip()
+        platform_version = resolve_platform_version(platform_version_select, platform_version_custom)
         target_release = request.POST.get('target_release', '').strip()
         current_release = request.POST.get('current_release', '').strip()
         selected_config = configurations.filter(slug=config_slug).first()
@@ -174,6 +185,13 @@ def platform_check(request):
         configurations=configurations,
         selected_config=selected_config,
         platform_version=platform_version,
+        platform_version_select=platform_version_select or (
+            platform_version if platform_version in platform_versions else PLATFORM_VERSION_CUSTOM
+        ),
+        platform_version_custom=platform_version_custom or (
+            platform_version if platform_version_select == PLATFORM_VERSION_CUSTOM or platform_version not in platform_versions else ''
+        ),
+        platform_versions=platform_versions,
         target_release=target_release,
         current_release=current_release,
         releases=releases,

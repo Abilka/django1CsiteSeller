@@ -1,5 +1,8 @@
 (function () {
     const configSelect = document.getElementById('configuration');
+    const platformSelect = document.getElementById('platform_version');
+    const platformCustomWrap = document.getElementById('platform_version_custom_wrap');
+    const platformCustomInput = document.getElementById('platform_version_custom');
     const targetSelect = document.getElementById('target_release');
     const currentSelect = document.getElementById('current_release');
     const form = document.getElementById('platform-check-form');
@@ -11,6 +14,20 @@
     configSelect.addEventListener('change', function () {
         loadReleases(configSelect.value);
     });
+
+    if (platformSelect && platformCustomWrap && platformCustomInput) {
+        platformSelect.addEventListener('change', toggleCustomPlatform);
+        toggleCustomPlatform();
+    }
+
+    function toggleCustomPlatform() {
+        const isCustom = platformSelect.value === '__custom__';
+        platformCustomWrap.hidden = !isCustom;
+        platformCustomInput.required = isCustom;
+        if (!isCustom) {
+            platformCustomInput.value = '';
+        }
+    }
 
     function loadReleases(slug) {
         const loading = '<option value="">— Загрузка… —</option>';
@@ -58,6 +75,9 @@
         form.addEventListener('submit', function () {
             targetSelect.disabled = false;
             currentSelect.disabled = false;
+            if (platformSelect && platformSelect.value !== '__custom__' && platformCustomInput) {
+                platformCustomInput.disabled = true;
+            }
         });
     }
 })();
