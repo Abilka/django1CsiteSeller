@@ -16,9 +16,22 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+mkdir -p data persistent/media
+
+# Однократная миграция со старой схемы: db.sqlite3 в корне проекта
+if [[ -f db.sqlite3 && ! -f data/db.sqlite3 ]]; then
+  echo "==> Moving legacy db.sqlite3 to data/"
+  mv db.sqlite3 data/db.sqlite3
+fi
+
 echo "==> Building and starting containers ($COMPOSE_FILE)"
 docker compose -f "$COMPOSE_FILE" build --pull
-docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 120
+echo "==> Waiting for container healthcheck (migrate + collectstatic + gunicorn, up to 3 min)"
+if ! docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180; then
+  echo "==> Deploy failed. Last logs:"
+  docker compose -f "$COMPOSE_FILE" logs --tail=80 web
+  exit 1
+fi
 
 echo "==> Application is up"
 docker compose -f "$COMPOSE_FILE" ps

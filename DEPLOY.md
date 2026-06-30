@@ -10,7 +10,9 @@
 git push → GitHub Actions (тесты) → rsync на сервер → docker compose up
 ```
 
-На сервер **не попадают**: `.env`, `db.sqlite3`, `media/` — они остаются только на VPS.
+На сервер **не попадают**: `.env`, `data/`, `persistent/` — они остаются только на VPS.
+
+База SQLite: `data/db.sqlite3` на диске сервера (не внутри анонимного Docker volume).
 
 ## 1. Подготовка репозитория
 
@@ -51,7 +53,7 @@ ssh deploy@YOUR_SERVER_IP "cp /opt/django1CsiteSeller/.env.example /opt/django1C
 |---|---|
 | `SECRET_KEY` | длинная случайная строка |
 | `DEBUG` | `False` |
-| `ALLOWED_HOSTS` | `example.com,www.example.com` |
+| `ALLOWED_HOSTS` | `your-domain.ru,www.your-domain.ru,127.0.0.1` |
 | `CSRF_TRUSTED_ORIGINS` | `https://example.com,https://www.example.com` |
 | `SITE_URL` | `https://example.com` |
 | `WEB_PORT` | `8000` (только localhost, за nginx) |
@@ -123,13 +125,64 @@ bash scripts/deploy.sh
 | Нужен ли deploy key на сервере? | **Нет.** Код копируется через rsync из Actions. |
 | Работают ли Actions на private repo? | **Да.** На бесплатном плане — 2000 минут/мес. |
 | Перезапишется ли `.env` при деплое? | **Нет**, он в списке исключений rsync. |
+| Где лежит база на сервере? | `DEPLOY_PATH/data/db.sqlite3` |
 | Нужен ли `git` на сервере? | Нет для автодеплоя. Только Docker и SSH. |
+
+## База данных: почему могла «пропасть»
+
+Раньше `docker-compose.prod.yml` хранил SQLite в **именованном Docker volume** (`sqlite_data`). При этом:
+
+1. Файл `db.sqlite3` в корне проекта на сервере **не использовался** production-контейнером.
+2. При смене имени папки/проекта Docker создавал **новый пустой volume** (например `tortugasite_sqlite_data` вместо старого).
+3. При `migrate` на пустой БД срабатывали **seed-миграции** — сайт выглядел «как после переустановки».
+
+**Сейчас** БД монтируется в `./data/db.sqlite3` на диске сервера и не зависит от имени Docker-проекта.
+
+### Восстановить старую БД из Docker volume
+
+На сервере:
+
+```bash
+cd /opt/django1CsiteSeller   # ваш DEPLOY_PATH
+docker volume ls             # ищите *sqlite* или старое имя проекта
+bash scripts/recover-db-from-volume.sh
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Или вручную, если volume назывался `tortugasite_sqlite_data`:
+
+```bash
+mkdir -p data
+docker run --rm \
+  -v tortugasite_sqlite_data:/from:ro \
+  -v "$(pwd)/data:/to" \
+  alpine cp /from/db.sqlite3 /to/db.sqlite3
+```
+
+### Бэкап перед деплоем
+
+```bash
+cp data/db.sqlite3 "data/db.sqlite3.bak.$(date +%Y%m%d-%H%M)"
+```
 
 ## Troubleshooting
 
 **`Permission denied` при rsync**
 
 Убедитесь, что `deploy` владеет каталогом: `sudo chown -R deploy:deploy /opt/django1CsiteSeller`.
+
+**Деплой завис на `Container ... Waiting`**
+
+`docker compose up --wait` ждёт healthcheck. Чаще всего:
+
+1. Ещё идут `migrate` / `collectstatic` (подождите до 2 мин)
+2. Gunicorn упал при старте — смотрите логи:
+
+```bash
+docker compose -f docker-compose.prod.yml logs --tail=100 web
+```
+
+3. В `.env` нет домена в `ALLOWED_HOSTS` — сайт не откроется (но healthcheck теперь проверяет только порт)
 
 **Деплой упал на healthcheck**
 

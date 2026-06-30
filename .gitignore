@@ -1,5 +1,7 @@
 *.pyc
 __pycache__/
+data/
+persistent/
 db.sqlite3
 .env
 .venv/

@@ -64,6 +64,8 @@ jobs:
             --exclude 'venv/' \
             --exclude '.venv/' \
             --exclude 'db.sqlite3' \
+            --exclude 'data/' \
+            --exclude 'persistent/' \
             --exclude 'media/' \
             --exclude '__pycache__/' \
             --exclude '.cursor/' \
