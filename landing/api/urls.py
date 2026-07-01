@@ -8,6 +8,7 @@ from .tools_views import (
     ReleaseFeedToolView,
     TaskEstimatorToolView,
 )
+from .lead_views import LeadPollView
 from .views import CalculateUpdateView, ConfigurationVersionsView, OneCConfigurationViewSet, OneCReleaseViewSet
 
 router = DefaultRouter()
@@ -15,6 +16,7 @@ router.register('configurations', OneCConfigurationViewSet, basename='onec-confi
 router.register('releases', OneCReleaseViewSet, basename='onec-release')
 
 urlpatterns = [
+    path('leads/poll/', LeadPollView.as_view(), name='lead-poll'),
     path('calculate/', CalculateUpdateView.as_view(), name='onec-calculate'),
     path('configurations/<slug:slug>/versions/', ConfigurationVersionsView.as_view(), name='onec-versions'),
     path('tools/platform-check/', PlatformCheckToolView.as_view(), name='tool-platform-check'),
