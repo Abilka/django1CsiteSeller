@@ -1,12 +1,12 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from landing.models import OneCConfiguration
-from landing.services.its_sync import sync_releases_for_configuration
+from landing.services.freesc_sync import sync_releases_for_configuration
 
 
 class Command(BaseCommand):
     help = (
-        'Импорт релизов одной конфигурации с its.1c.ru '
+        'Импорт релизов одной конфигурации с freesc.ru '
         '(обёртка над sync_freesc_releases --config).'
     )
 
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--replace',
             action='store_true',
-            help='Удалить релизы, которых нет на ИТС',
+            help='Удалить релизы, которых нет на freesc.ru',
         )
 
     def handle(self, *args, **options):

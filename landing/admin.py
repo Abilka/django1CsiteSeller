@@ -71,18 +71,15 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 'она не связана с уведомлениями о заявках.'
             ),
         }),
-        ('Синхронизация релизов 1С:ИТС', {
+        ('Синхронизация релизов freesc.ru', {
             'fields': (
                 'freesc_auto_sync_enabled',
                 'freesc_sync_interval_days',
                 'freesc_last_sync_at',
-                'its_sync_now_link',
+                'freesc_sync_now_link',
             ),
             'description': (
-                'Автоматическая загрузка релизов с its.1c.ru/db/updinfo. '
-                'Обновляются конфигурации с привязкой к ИТС: '
-                '1С:Бухгалтерия 8 (ПРОФ и базовая), ЗУП 3, УТ 11. '
-                'удаляются при синхронизации. '
+                'Автоматическая загрузка релизов с freesc.ru для калькулятора обновлений. '
                 'Планировщик включается переменной окружения FREESC_RUN_SCHEDULER=1 '
                 '(проверка каждые 6 часов, синхронизация — по интервалу в днях). '
                 'Кнопка ниже запускает синхронизацию немедленно, не дожидаясь интервала.'
@@ -105,7 +102,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         'favicon_preview',
         'telegram_test_link',
         'indexnow_submit_all_link',
-        'its_sync_now_link',
+        'freesc_sync_now_link',
     )
 
     def get_urls(self):
@@ -122,8 +119,13 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                 name='landing_sitesettings_submit_indexnow',
             ),
             path(
+                'sync-freesc-releases/',
+                self.admin_site.admin_view(self.sync_freesc_releases_view),
+                name='landing_sitesettings_sync_freesc_releases',
+            ),
+            path(
                 'sync-its-releases/',
-                self.admin_site.admin_view(self.sync_its_releases_view),
+                self.admin_site.admin_view(self.sync_freesc_releases_view),
                 name='landing_sitesettings_sync_its_releases',
             ),
         ]
@@ -163,14 +165,14 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         return redirect('admin:landing_sitesettings_change', 1)
 
     @admin.display(description='Принудительная синхронизация')
-    def its_sync_now_link(self, obj):
-        url = reverse('admin:landing_sitesettings_sync_its_releases')
+    def freesc_sync_now_link(self, obj):
+        url = reverse('admin:landing_sitesettings_sync_freesc_releases')
         return format_html(
-            '<a class="button" href="{}">Синхронизировать релизы с ИТС сейчас</a>',
+            '<a class="button" href="{}">Синхронизировать релизы с freesc.ru сейчас</a>',
             url,
         )
 
-    def sync_its_releases_view(self, request):
+    def sync_freesc_releases_view(self, request):
         from landing.services.freesc_sync import run_scheduled_sync
 
         try:
@@ -336,7 +338,6 @@ class OneCConfigurationAdmin(admin.ModelAdmin):
         'name',
         'slug',
         'is_published',
-        'its_doc_id',
         'latest_version_display',
         'releases_count',
         'sort_order',

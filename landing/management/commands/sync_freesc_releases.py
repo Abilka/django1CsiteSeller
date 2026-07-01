@@ -2,18 +2,22 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from landing.models import ReleaseSyncLog, SiteSettings
-from landing.services.its_sync import sync_all_from_its, sync_releases_for_configuration
-from landing.services.freesc_sync import is_sync_due
+from landing.services.freesc_sync import (
+    format_sync_report_message,
+    is_sync_due,
+    sync_all_from_freesc,
+    sync_releases_for_configuration,
+)
 
 
 class Command(BaseCommand):
-    help = 'Синхронизация конфигураций и релизов 1С с its.1c.ru/db/updinfo.'
+    help = 'Синхронизация конфигураций и релизов 1С с freesc.ru.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--all',
             action='store_true',
-            help='Синхронизировать все конфигурации с привязкой к ИТС',
+            help='Синхронизировать все конфигурации',
         )
         parser.add_argument(
             '--config',
@@ -23,7 +27,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--sync-configs',
             action='store_true',
-            help='Обновить список конфигураций с its.1c.ru/db/updinfo',
+            help='Обновить список конфигураций с freesc.ru',
         )
         parser.add_argument(
             '--dry-run',
@@ -33,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--prune',
             action='store_true',
-            help='Удалить релизы, которых нет на ИТС',
+            help='Удалить релизы, которых нет на freesc.ru',
         )
         parser.add_argument(
             '--force',
@@ -61,7 +65,7 @@ class Command(BaseCommand):
 
         sync_configs = options['sync_configs'] or options['all'] or options['force']
         prune = options['prune'] or options['all'] or options['force']
-        report = sync_all_from_its(
+        report = sync_all_from_freesc(
             sync_configs=sync_configs,
             dry_run=False,
             prune=prune,
@@ -83,7 +87,7 @@ class Command(BaseCommand):
             releases_created=report.releases_created,
             releases_updated=report.releases_updated,
             releases_deleted=report.releases_deleted,
-            message=self._report_summary(report),
+            message=format_sync_report_message(report).split('\n', 1)[0],
             error_message=report.error or self._failed_configs_message(report),
             finished_at=timezone.now(),
         )
@@ -96,7 +100,7 @@ class Command(BaseCommand):
 
     def _run_dry_run(self, options):
         slugs = [options['config_slug']] if options.get('config_slug') else None
-        report = sync_all_from_its(
+        report = sync_all_from_freesc(
             slugs=slugs,
             sync_configs=options.get('sync_configs') or options.get('all') or not slugs,
             dry_run=True,
@@ -119,21 +123,21 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'{configuration.name}: создано {detail.created}, '
             f'обновлено {detail.updated}, удалено {detail.deleted}, '
-            f'всего на ИТС: {detail.total_fetched}.',
+            f'актуальный {detail.latest_version}, всего на freesc.ru: {detail.total_fetched}.',
         ))
 
     def _print_report(self, report):
         if report.configs_created or report.configs_updated:
             self.stdout.write(
-                f'Конфигурации ИТС: +{report.configs_created} / ~{report.configs_updated}',
+                f'Конфигурации freesc.ru: +{report.configs_created} / ~{report.configs_updated}',
             )
         for detail in report.details:
             if detail.error:
                 self.stdout.write(self.style.ERROR(f'  [x] {detail.slug}: {detail.error}'))
             else:
                 line = (
-                    f'  [ok] {detail.name}: +{detail.created} ~{detail.updated} '
-                    f'({detail.total_fetched} релизов)'
+                    f'  [ok] {detail.name}: актуальный {detail.latest_version or "—"}, '
+                    f'+{detail.created} ~{detail.updated} ({detail.total_fetched} релизов)'
                 )
                 if detail.deleted:
                     line += f', удалено {detail.deleted}'
@@ -143,12 +147,6 @@ class Command(BaseCommand):
             f'релизов +{report.releases_created} ~{report.releases_updated}'
             + (f' -{report.releases_deleted}' if report.releases_deleted else ''),
         ))
-
-    def _report_summary(self, report) -> str:
-        return (
-            f'конфигураций {report.configurations_synced}/{len(report.details)}, '
-            f'релизов +{report.releases_created} ~{report.releases_updated}'
-        )
 
     def _failed_configs_message(self, report) -> str:
         failed = [f'{item.slug}: {item.error}' for item in report.details if item.error]

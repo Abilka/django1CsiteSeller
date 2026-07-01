@@ -2,72 +2,39 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from landing.models import OneCConfiguration, OneCRelease
-from landing.services.its_parser import ItsVersion
-from landing.services.its_sync import sync_releases_for_configuration
+from landing.models import OneCConfiguration
+from landing.services.freesc_parser import parse_configurations, parse_release_table
 
-SAMPLE_ITS_INDEX_HTML = """
-<ul>
-<li><a href="/db/updinfo/content/284/hdoc" target="_top">1С:Управление торговлей 11</a></li>
-</ul>
+SAMPLE_LIST_HTML = """
+<table class="table1">
+<tbody>
+<tr><th>Номер</th><th>Дата</th><th>From</th><th>Platform</th></tr>
+<tr>
+<td>&nbsp;&nbsp;11.5.27.52</td>
+<td>&nbsp;&nbsp;2026-06-17</td>
+<td>&nbsp;&nbsp;11.5.22.186, 11.5.27.50</td>
+<td>&nbsp;&nbsp;8.3.27.1859;</td>
+</tr>
+</tbody>
+</table>
 """
 
-SAMPLE_BP_VERSIONS = [
-    ItsVersion(
-        doc_id=5001,
-        version='3.0.200',
-        url='https://its.1c.ru/db/updinfo/content/5001/hdoc',
-    ),
-    ItsVersion(
-        doc_id=5000,
-        version='3.0.199',
-        url='https://its.1c.ru/db/updinfo/content/5000/hdoc',
-    ),
-]
+SAMPLE_CALC_HTML = """
+<select name="cur_conf">
+<option value=''>-- Выберите --</option>
+<option value= rel_1c_ut11>Управление торговлей, ред. 11</option>
+</select>
+"""
 
 
 class ReleaseSyncCommandTests(TestCase):
     def test_sync_dry_run_with_mock(self):
         from django.core.management import call_command
 
-        with patch('landing.services.its_sync.fetch_updinfo_index', return_value=SAMPLE_ITS_INDEX_HTML), \
-             patch('landing.services.its_sync.fetch_configuration_versions', return_value=[
-                 ItsVersion(
-                     doc_id=2749,
-                     version='11.5.27.52',
-                     url='https://its.1c.ru/db/updinfo/content/2749/hdoc',
-                 ),
-             ]):
-            from landing.models import OneCConfiguration
-
+        with patch('landing.services.freesc_sync.fetch_calc_update_page', return_value=SAMPLE_CALC_HTML), \
+             patch('landing.services.freesc_sync.fetch_release_list_page', return_value=SAMPLE_LIST_HTML):
             OneCConfiguration.objects.get_or_create(
                 slug='rel_1c_ut11',
-                defaults={'name': 'УТ 11', 'its_doc_id': 284},
+                defaults={'name': 'УТ 11'},
             )
-            call_command('sync_its_releases', '--all', '--dry-run')
-
-    def test_bp30b_syncs_from_same_its_section(self):
-        configuration, _ = OneCConfiguration.objects.get_or_create(
-            slug='rel_1c_bp30b',
-            defaults={
-                'name': '1С:Бухгалтерия 8 (базовая)',
-                'its_doc_id': 4,
-                'is_published': True,
-            },
-        )
-        configuration.its_doc_id = 4
-        configuration.save(update_fields=['its_doc_id'])
-        configuration.releases.all().delete()
-        OneCRelease.objects.create(
-            configuration=configuration,
-            version='3.0.199.13',
-            sort_order=0,
-        )
-
-        with patch('landing.services.its_sync.fetch_configuration_versions', return_value=SAMPLE_BP_VERSIONS):
-            result = sync_releases_for_configuration(configuration, prune=True)
-
-        configuration.refresh_from_db()
-        self.assertEqual(result.latest_version, '3.0.200')
-        self.assertEqual(configuration.latest_release.version, '3.0.200')
-        self.assertFalse(configuration.releases.filter(version='3.0.199.13').exists())
+            call_command('sync_freesc_releases', '--all', '--dry-run')

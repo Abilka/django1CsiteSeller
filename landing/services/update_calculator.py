@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from landing.models import OneCConfiguration, OneCRelease, SiteSettings
-from landing.services.its_release_graph import build_chain_versions
 from landing.services.version_utils import (
     normalize_version,
     parse_from_versions,
@@ -22,6 +21,7 @@ class UpdatePathError(Exception):
 class ChainStep:
     version: str
     url: str
+
 
 @dataclass
 class ReleaseInfo:
@@ -48,7 +48,6 @@ class UpdatePathResult:
 
 
 def build_update_chain(
-    configuration_slug: str,
     releases: list[ReleaseInfo],
     current_version: str,
 ) -> tuple[list[ChainStep], str, str]:
@@ -66,24 +65,33 @@ def build_update_chain(
         return [], latest, latest_release.min_platform
 
     release_urls = {release.version: release.its_url for release in releases}
-    versions_newest_first = sorted(
-        [release.version for release in releases],
-        key=version_parts,
-        reverse=True,
-    )
+    chain_versions: list[str] = []
+    cursor = current
+    visited: set[str] = set()
 
-    try:
-        chain_versions = build_chain_versions(
-            configuration_slug,
-            versions_newest_first,
-            current,
-            latest,
-        )
-    except ValueError as exc:
-        raise UpdatePathError(str(exc), 'invalid_version') from exc
+    while cursor != latest:
+        if cursor in visited:
+            raise UpdatePathError(
+                f'Обнаружен цикл при построении цепочки обновлений (версия {cursor}).',
+                'cycle_detected',
+            )
+        visited.add(cursor)
 
-    if not chain_versions:
-        return [], latest, latest_release.min_platform
+        next_release = None
+        for release in releases:
+            if cursor in release.from_versions:
+                next_release = release.version
+                break
+
+        if not next_release:
+            raise UpdatePathError(
+                f'Не найдено обновление для версии {cursor}. '
+                'Проверьте данные релизов или обратитесь к специалисту.',
+                'no_path',
+            )
+
+        chain_versions.append(next_release)
+        cursor = next_release
 
     chain = [
         ChainStep(version=version, url=release_urls.get(version, ''))
@@ -112,7 +120,7 @@ def calculate_update_path(
     site_settings: SiteSettings | None = None,
 ) -> UpdatePathResult:
     releases = get_release_infos(configuration)
-    chain, latest, platform = build_update_chain(configuration.slug, releases, current_version)
+    chain, latest, platform = build_update_chain(releases, current_version)
     current = normalize_version(current_version)
     settings = site_settings or SiteSettings.load()
     pricing = settings.estimate_update_price(len(chain))

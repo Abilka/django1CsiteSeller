@@ -43,7 +43,6 @@ class UpdateCalculatorServiceTests(TestCase):
             [step.version for step in result.chain],
             ['11.5.12.270', '11.5.17.234', '11.5.22.186', '11.5.27.52'],
         )
-        self.assertTrue(all(step.url for step in result.chain))
         self.assertEqual(result.min_platform, '8.3.27.1859')
         self.assertFalse(result.is_up_to_date)
         self.assertEqual(result.steps_count, 4)
@@ -91,7 +90,7 @@ class UpdateCalculatorServiceTests(TestCase):
             ReleaseInfo('1.0.0', set(), ''),
         ]
         with self.assertRaises(UpdatePathError):
-            build_update_chain('rel_1c_ut11', infos, '9.9.9.9')
+            build_update_chain(infos, '9.9.9.9')
 
 
 class UpdateCalculatorAPITests(APITestCase):

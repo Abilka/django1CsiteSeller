@@ -4,4 +4,4 @@ from landing.management.commands.sync_freesc_releases import Command as SyncFree
 
 
 class Command(SyncFreescReleasesCommand):
-    help = 'Синхронизация конфигураций и релизов 1С с its.1c.ru/db/updinfo.'
+    help = 'Синхронизация конфигураций и релизов 1С с freesc.ru (алиас sync_freesc_releases).'
