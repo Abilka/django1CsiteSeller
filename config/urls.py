@@ -21,6 +21,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.static import serve
 
+from config.feeds import SiteUpdatesFeed
 from config.seo_views import indexnow_key, robots_txt
 from config.sitemaps import BlogPostSitemap, StaticViewSitemap
 
@@ -33,6 +34,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('config.api_urls')),
     path('blog/', include('blog.urls')),
+    path('feed/', SiteUpdatesFeed(), name='site_feed'),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path('<str:key>.txt', indexnow_key, name='indexnow_key'),

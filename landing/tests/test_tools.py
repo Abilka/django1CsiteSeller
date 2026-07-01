@@ -160,6 +160,16 @@ class ToolsPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('application/rss+xml', response['Content-Type'])
 
+    def test_release_feed_rss_with_configuration_filter(self):
+        response = self.client.get(
+            reverse('landing:release_feed_rss'),
+            {'configuration': 'test_feed'},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('application/rss+xml', response['Content-Type'])
+        self.assertIn('test_feed', content)
+
 
 class ToolsApiTests(APITestCase):
     def setUp(self):

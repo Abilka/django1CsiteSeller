@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block extra_head %}
+<link rel="alternate" type="application/rss+xml" title="Блог — {{ SITE_NAME }}" href="{% url 'blog:rss' %}">
 {% if pagination_prev %}<link rel="prev" href="{{ pagination_prev }}">{% endif %}
 {% if pagination_next %}<link rel="next" href="{{ pagination_next }}">{% endif %}
 {% endblock %}

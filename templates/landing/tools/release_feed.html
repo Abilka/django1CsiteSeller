@@ -1,5 +1,9 @@
 {% extends 'landing/tools/base_tool.html' %}
 
+{% block extra_head %}
+<link rel="alternate" type="application/rss+xml" title="Новые релизы 1С — {{ SITE_NAME }}" href="{% url 'landing:release_feed_rss' %}{% if selected_config %}?configuration={{ selected_config }}{% endif %}">
+{% endblock %}
+
 {% block tool_content %}
 <form class="calc-form tool-filters" method="get">
     <div class="calc-form__grid">
@@ -26,7 +30,7 @@
     </div>
     <div class="calc-form__actions">
         <button type="submit" class="btn btn--primary">Применить фильтр</button>
-        <a href="{% url 'landing:release_feed_rss' %}" class="btn btn--ghost btn--sm">RSS-лента</a>
+        <a href="{% url 'landing:release_feed_rss' %}{% if selected_config %}?configuration={{ selected_config }}{% endif %}{% if selected_days != 90 %}{% if selected_config %}&{% else %}?{% endif %}days={{ selected_days }}{% endif %}" class="btn btn--ghost btn--sm">RSS-лента</a>
     </div>
 </form>
 
