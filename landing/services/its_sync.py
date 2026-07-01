@@ -15,6 +15,19 @@ from landing.services.its_parser import (
     resolve_configuration_slug,
 )
 from landing.services.its_release_graph import derive_from_versions
+from landing.services.version_utils import version_parts
+
+
+def _reindex_release_sort_orders(configuration: OneCConfiguration) -> None:
+    releases = list(configuration.releases.all().only('pk', 'version', 'sort_order'))
+    releases.sort(key=lambda release: version_parts(release.version), reverse=True)
+    to_update = []
+    for index, release in enumerate(releases):
+        if release.sort_order != index:
+            release.sort_order = index
+            to_update.append(release)
+    if to_update:
+        OneCRelease.objects.bulk_update(to_update, ['sort_order'])
 
 
 @dataclass
@@ -148,6 +161,8 @@ def sync_releases_for_configuration(
         if prune:
             deleted, _ = configuration.releases.exclude(version__in=fetched_versions).delete()
             result.deleted = deleted
+
+        _reindex_release_sort_orders(configuration)
 
     return result
 

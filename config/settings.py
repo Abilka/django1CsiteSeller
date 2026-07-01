@@ -174,7 +174,7 @@ STORAGES = {
     },
 }
 
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', str(BASE_DIR / 'media')))
 
 # Default primary key field type

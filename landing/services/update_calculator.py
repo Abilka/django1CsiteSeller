@@ -4,7 +4,12 @@ from dataclasses import dataclass
 
 from landing.models import OneCConfiguration, OneCRelease, SiteSettings
 from landing.services.its_release_graph import build_chain_versions
-from landing.services.version_utils import normalize_version, parse_from_versions
+from landing.services.version_utils import (
+    normalize_version,
+    parse_from_versions,
+    pick_latest_version,
+    version_parts,
+)
 
 
 class UpdatePathError(Exception):
@@ -54,12 +59,18 @@ def build_update_chain(
     if not current:
         raise UpdatePathError('Укажите номер текущего релиза.', 'invalid_version')
 
-    latest = releases[0].version
+    latest = pick_latest_version([release.version for release in releases])
+    latest_release = next(release for release in releases if release.version == latest)
+
     if current == latest:
-        return [], latest, releases[0].min_platform
+        return [], latest, latest_release.min_platform
 
     release_urls = {release.version: release.its_url for release in releases}
-    versions_newest_first = [release.version for release in releases]
+    versions_newest_first = sorted(
+        [release.version for release in releases],
+        key=version_parts,
+        reverse=True,
+    )
 
     try:
         chain_versions = build_chain_versions(
@@ -72,21 +83,18 @@ def build_update_chain(
         raise UpdatePathError(str(exc), 'invalid_version') from exc
 
     if not chain_versions:
-        return [], latest, releases[0].min_platform
+        return [], latest, latest_release.min_platform
 
     chain = [
         ChainStep(version=version, url=release_urls.get(version, ''))
         for version in chain_versions
     ]
-    return chain, latest, releases[0].min_platform
+    return chain, latest, latest_release.min_platform
 
 
 def get_release_infos(configuration: OneCConfiguration) -> list[ReleaseInfo]:
-    queryset = OneCRelease.objects.filter(configuration=configuration).order_by(
-        'sort_order',
-        '-release_date',
-        '-id',
-    )
+    releases = list(OneCRelease.objects.filter(configuration=configuration))
+    releases.sort(key=lambda release: version_parts(release.version), reverse=True)
     return [
         ReleaseInfo(
             version=normalize_version(release.version),
@@ -94,7 +102,7 @@ def get_release_infos(configuration: OneCConfiguration) -> list[ReleaseInfo]:
             min_platform=release.min_platform.strip().strip(';').strip(),
             its_url=release.its_url,
         )
-        for release in queryset
+        for release in releases
     ]
 
 

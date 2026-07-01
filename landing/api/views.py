@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from landing.models import OneCConfiguration, OneCRelease
 from landing.services.update_calculator import UpdatePathError, UpdatePathResult, calculate_update_path
+from landing.services.version_utils import sort_versions_newest_first
 
 from .serializers import (
     CalculateUpdateSerializer,
@@ -44,16 +45,17 @@ class OneCConfigurationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def versions(self, request, slug=None):
         configuration = self.get_object()
-        versions = (
-            OneCRelease.objects.filter(configuration=configuration)
-            .order_by('sort_order', '-release_date', '-id')
-            .values_list('version', flat=True)
+        versions = sort_versions_newest_first(
+            list(
+                OneCRelease.objects.filter(configuration=configuration)
+                .values_list('version', flat=True)
+            )
         )
         latest = configuration.latest_release
         return Response({
             'configuration': configuration.slug,
             'latest_version': latest.version if latest else None,
-            'versions': list(versions),
+            'versions': versions,
         })
 
     @action(detail=True, methods=['post'], url_path='calculate')
@@ -125,15 +127,16 @@ class ConfigurationVersionsView(APIView):
             slug=slug,
             is_published=True,
         )
-        versions = (
-            OneCRelease.objects.filter(configuration=configuration)
-            .order_by('sort_order', '-release_date', '-id')
-            .values_list('version', flat=True)
+        versions = sort_versions_newest_first(
+            list(
+                OneCRelease.objects.filter(configuration=configuration)
+                .values_list('version', flat=True)
+            )
         )
         latest = configuration.latest_release
         return Response({
             'configuration': configuration.slug,
             'name': configuration.name,
             'latest_version': latest.version if latest else None,
-            'versions': list(versions),
+            'versions': versions,
         })

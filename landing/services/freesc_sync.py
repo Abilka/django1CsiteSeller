@@ -58,7 +58,7 @@ def run_scheduled_sync(*, force: bool = False) -> ReleaseSyncLog | None:
     )
 
     try:
-        report = sync_all_from_its(sync_configs=True, prune=False)
+        report = sync_all_from_its(sync_configs=True, prune=True)
         log.configurations_total = len(report.details)
         log.configurations_synced = report.configurations_synced
         log.configurations_failed = report.configurations_failed

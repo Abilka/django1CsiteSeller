@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from landing.services.version_utils import normalize_version, parse_from_versions
-
-
-def version_parts(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in normalize_version(version).split('.'))
+from landing.services.version_utils import (
+    normalize_version,
+    parse_from_versions,
+    version_parts,
+)
 
 
 def branch3(version: str) -> tuple[int, ...]:

@@ -11,7 +11,12 @@
         loadVersions(configSelect.value);
     });
 
-    function loadVersions(slug) {
+    if (configSelect.value) {
+        const selectedVersion = versionSelect.value;
+        loadVersions(configSelect.value, selectedVersion);
+    }
+
+    function loadVersions(slug, selectedVersion) {
         versionSelect.innerHTML = '<option value="">— Загрузка… —</option>';
         versionSelect.disabled = true;
 
@@ -34,6 +39,9 @@
                     const option = document.createElement('option');
                     option.value = version;
                     option.textContent = version;
+                    if (selectedVersion && version === selectedVersion) {
+                        option.selected = true;
+                    }
                     versionSelect.appendChild(option);
                 });
                 versionSelect.disabled = false;

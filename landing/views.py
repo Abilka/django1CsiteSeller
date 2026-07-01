@@ -11,6 +11,7 @@ from .models import (
     TypicalTask,
 )
 from .services.update_calculator import UpdatePathError, calculate_update_path
+from .services.version_utils import sort_versions_newest_first
 from .tool_context import build_tool_context
 from .tools.migration_calc import estimate_migration
 from .tools.platform_check import (
@@ -96,9 +97,8 @@ def update_calculator(request):
             selected_config = configurations.filter(slug=config_slug).first()
 
     if selected_config:
-        versions = list(
-            selected_config.releases.order_by('sort_order', '-release_date', '-id')
-            .values_list('version', flat=True)
+        versions = sort_versions_newest_first(
+            list(selected_config.releases.values_list('version', flat=True))
         )
 
     return render(request, 'landing/update_calculator.html', {

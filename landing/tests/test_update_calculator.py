@@ -72,6 +72,19 @@ class UpdateCalculatorServiceTests(TestCase):
         result = calculate_update_path(self.configuration, '11.5.27.50')
         self.assertEqual([step.version for step in result.chain], ['11.5.27.52'])
 
+    def test_newer_release_used_even_with_stale_sort_order(self):
+        OneCRelease.objects.create(
+            configuration=self.configuration,
+            version='11.5.27.58',
+            from_versions=['11.5.27.52'],
+            min_platform='8.3.27.1859',
+            sort_order=99,
+            its_url='https://its.1c.ru/db/updinfo/content/1999/hdoc',
+        )
+        result = calculate_update_path(self.configuration, '11.5.27.52')
+        self.assertEqual(result.latest_version, '11.5.27.58')
+        self.assertEqual([step.version for step in result.chain], ['11.5.27.58'])
+
     def test_no_path_raises(self):
         infos = [
             ReleaseInfo('2.0.0', {'1.0.0'}, ''),

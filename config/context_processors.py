@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.templatetags.static import static
 
+from config.feed_utils import absolute_url
 from config.seo import organization_schema, website_schema
 from landing.models import SiteSettings, TeamMember
 
@@ -15,18 +16,6 @@ def _static_url(path: str) -> str:
         if not prefix.startswith('/'):
             prefix = f'/{prefix}'
         return prefix + path
-
-
-def _absolute_url(path: str, request, site_url: str) -> str:
-    if not path:
-        return ''
-    if path.startswith(('http://', 'https://')):
-        return path
-    if site_url:
-        return f'{site_url}{path}'
-    if request:
-        return request.build_absolute_uri(path)
-    return path
 
 
 def site(request):
@@ -44,10 +33,12 @@ def site(request):
         default_title = default_title.format(site_name=site_name)
     default_description = settings.SEO_DEFAULT_DESCRIPTION
 
-    og_image = _absolute_url(_static_url('web-app-manifest-512x512.png'), request, site_url)
+    og_image = absolute_url(_static_url('web-app-manifest-512x512.png'), request)
+    favicon_url = ''
     logo_url = og_image
     if site_settings.favicon:
-        logo_url = _absolute_url(site_settings.favicon.url, request, site_url)
+        favicon_url = absolute_url(site_settings.favicon.url, request)
+        logo_url = favicon_url
 
     contact_email = site_settings.contact_email or settings.SITE_CONTACT_EMAIL
     contact_phone = site_settings.contact_phone or ''
@@ -71,6 +62,7 @@ def site(request):
         'SITE_DEFAULT_TITLE': default_title,
         'SEO_DEFAULT_DESCRIPTION': default_description,
         'SEO_OG_IMAGE': og_image,
+        'FAVICON_URL': favicon_url,
         'SITE_CONTACT_EMAIL': contact_email,
         'YANDEX_METRICA_ID': settings.YANDEX_METRICA_ID,
         'GOOGLE_ANALYTICS_ID': settings.GOOGLE_ANALYTICS_ID,

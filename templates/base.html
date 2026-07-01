@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
     <link rel="alternate" type="application/rss+xml" title="Обновления — {{ SITE_NAME }}" href="{% url 'site_feed' %}">
-    {% if settings.favicon %}<link rel="icon" href="{{ settings.favicon.url }}">{% endif %}
+    {% if FAVICON_URL %}<link rel="icon" href="{{ FAVICON_URL }}">{% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">

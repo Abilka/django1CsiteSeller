@@ -1,6 +1,17 @@
 import re
+from pathlib import Path
 
+from django.core.files.storage import default_storage
 from django.db import models
+
+ALLOWED_FAVICON_EXTENSIONS = {'.ico', '.png', '.svg', '.webp', '.gif'}
+
+
+def favicon_upload_path(instance, filename):
+    ext = Path(filename).suffix.lower()
+    if ext not in ALLOWED_FAVICON_EXTENSIONS:
+        ext = '.ico'
+    return f'favicon/favicon{ext}'
 
 
 class SiteSettings(models.Model):
@@ -74,7 +85,7 @@ class SiteSettings(models.Model):
     )
     favicon = models.ImageField(
         'Favicon',
-        upload_to='site/',
+        upload_to=favicon_upload_path,
         blank=True,
         help_text='Иконка вкладки браузера. Рекомендуется PNG или ICO, 32×32 или 64×64 px.',
     )
@@ -85,13 +96,28 @@ class SiteSettings(models.Model):
 
     def save(self, *args, **kwargs):
         old_rate = None
+        old_favicon_name = ''
         if self.pk:
             try:
-                old_rate = SiteSettings.objects.values_list('hourly_rate', flat=True).get(pk=1)
+                row = SiteSettings.objects.values('hourly_rate', 'favicon').get(pk=1)
+                old_rate = row['hourly_rate']
+                old_favicon_name = row['favicon'] or ''
             except SiteSettings.DoesNotExist:
                 pass
+
+        if self.favicon and not self.favicon._committed:
+            target_name = favicon_upload_path(self, self.favicon.name)
+            if default_storage.exists(target_name):
+                default_storage.delete(target_name)
+
         self.pk = 1
         super().save(*args, **kwargs)
+
+        new_favicon_name = self.favicon.name if self.favicon else ''
+        if old_favicon_name and old_favicon_name != new_favicon_name:
+            if default_storage.exists(old_favicon_name):
+                default_storage.delete(old_favicon_name)
+
         if old_rate is not None and old_rate != self.hourly_rate:
             PriceListItem.recalculate_all_prices(self.hourly_rate)
 
@@ -355,7 +381,12 @@ class OneCConfiguration(models.Model):
 
     @property
     def latest_release(self):
-        return self.releases.order_by('sort_order', '-release_date', '-id').first()
+        releases = list(self.releases.all())
+        if not releases:
+            return None
+        from landing.services.version_utils import version_parts
+
+        return max(releases, key=lambda release: version_parts(release.version))
 
 
 class OneCRelease(models.Model):
