@@ -9,6 +9,7 @@ from landing.services.its_parser import (
     ItsConfiguration,
     ItsFetchError,
     ItsVersion,
+    ITS_DOC_ID_EXTRA_SLUGS,
     fetch_configuration_versions,
     fetch_updinfo_index,
     parse_configurations,
@@ -82,6 +83,9 @@ def sync_configurations_from_its(dry_run: bool = False) -> tuple[int, int]:
                 updated += 1
             else:
                 created += 1
+            for extra_slug in ITS_DOC_ID_EXTRA_SLUGS.get(remote.doc_id, []):
+                if OneCConfiguration.objects.filter(slug=extra_slug).exists():
+                    updated += 1
             continue
 
         _, is_created = OneCConfiguration.objects.update_or_create(
@@ -92,6 +96,16 @@ def sync_configurations_from_its(dry_run: bool = False) -> tuple[int, int]:
             created += 1
         else:
             updated += 1
+
+        for extra_slug in ITS_DOC_ID_EXTRA_SLUGS.get(remote.doc_id, []):
+            extra_defaults = {
+                'its_doc_id': remote.doc_id,
+            }
+            if dry_run:
+                if OneCConfiguration.objects.filter(slug=extra_slug).exists():
+                    updated += 1
+                continue
+            OneCConfiguration.objects.filter(slug=extra_slug).update(**extra_defaults)
 
     return created, updated
 

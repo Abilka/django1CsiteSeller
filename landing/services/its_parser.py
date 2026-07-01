@@ -28,11 +28,16 @@ VERSION_LINK_PATTERN = re.compile(
 )
 DATE_PATTERN = re.compile(r'^(\d{2})\.(\d{2})\.(\d{4})$')
 
-# Соответствие разделов updinfo на ИТС slug-ам конфигураций в базе.
+# Соответствие разделов updinfo на ИТС основному slug конфигурации в базе.
+# Несколько записей в БД (например, ПРОФ и базовая) могут ссылаться на один its_doc_id.
 ITS_DOC_ID_TO_SLUG: dict[int, str] = {
     4: 'rel_1c_bp30',
     210: 'rel_1c_zup30',
     284: 'rel_1c_ut11',
+}
+
+ITS_DOC_ID_EXTRA_SLUGS: dict[int, list[str]] = {
+    4: ['rel_1c_bp30b'],
 }
 
 ITS_NAME_TO_SLUG: dict[str, str] = {
