@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from blog.models import BlogPost
 from blog.services.indexnow import (
@@ -79,6 +80,9 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             ),
             'description': (
                 'Автоматическая загрузка релизов с its.1c.ru/db/updinfo. '
+                'Обновляются только конфигурации с заполненным полем «ID раздела на ИТС» '
+                '(Бухгалтерия 3.0, ЗУП 3, УТ 11). Устаревшие релизы, которых нет на ИТС, '
+                'удаляются при синхронизации. '
                 'Планировщик включается переменной окружения FREESC_RUN_SCHEDULER=1 '
                 '(проверка каждые 6 часов, синхронизация — по интервалу в днях). '
                 'Кнопка ниже запускает синхронизацию немедленно, не дожидаясь интервала.'
@@ -176,12 +180,13 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             return redirect('admin:landing_sitesettings_change', 1)
 
         log_url = reverse('admin:landing_releasesynclog_change', args=[log.pk])
+        summary = mark_safe((log.message or '').replace('\n', '<br>'))
         if log.status == ReleaseSyncLog.Status.SUCCESS:
             messages.success(
                 request,
                 format_html(
-                    'Синхронизация завершена: {}. <a href="{}">Подробности в логе</a>.',
-                    log.message,
+                    'Синхронизация завершена:<br>{}<br><a href="{}">Подробности в логе</a>.',
+                    summary,
                     log_url,
                 ),
             )
@@ -189,9 +194,9 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             messages.warning(
                 request,
                 format_html(
-                    'Синхронизация частично успешна: {}. {} '
+                    'Синхронизация частично успешна:<br>{}<br>{} '
                     '<a href="{}">Подробности в логе</a>.',
-                    log.message,
+                    summary,
                     log.error_message,
                     log_url,
                 ),
@@ -322,16 +327,31 @@ class OneCReleaseInline(admin.TabularInline):
     model = OneCRelease
     extra = 0
     fields = ('version', 'release_date', 'from_versions', 'min_platform', 'sort_order')
-    ordering = ('sort_order',)
+    ordering = ('sort_order', 'version')
 
 
 @admin.register(OneCConfiguration)
 class OneCConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'is_published', 'sort_order', 'releases_count')
+    list_display = (
+        'name',
+        'slug',
+        'is_published',
+        'its_doc_id',
+        'latest_version_display',
+        'releases_count',
+        'sort_order',
+    )
     list_editable = ('is_published', 'sort_order')
     list_filter = ('is_published',)
     search_fields = ('name', 'slug')
     inlines = [OneCReleaseInline]
+
+    @admin.display(description='Актуальный релиз')
+    def latest_version_display(self, obj):
+        latest = obj.latest_release
+        if latest:
+            return latest.version
+        return '—'
 
     @admin.display(description='Релизов')
     def releases_count(self, obj):
@@ -345,6 +365,7 @@ class OneCReleaseAdmin(admin.ModelAdmin):
     search_fields = ('version', 'configuration__name', 'configuration__slug')
     list_editable = ('sort_order',)
     autocomplete_fields = ('configuration',)
+    ordering = ('configuration', 'sort_order', '-version')
 
 
 class MigrationPathStepInline(admin.TabularInline):

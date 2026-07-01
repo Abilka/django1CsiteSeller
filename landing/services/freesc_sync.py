@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from landing.models import ReleaseSyncLog, SiteSettings
+from landing.models import OneCConfiguration, ReleaseSyncLog, SiteSettings
 from landing.services.its_sync import (
     ConfigurationSyncResult,
     ItsSyncReport,
@@ -67,7 +67,7 @@ def run_scheduled_sync(*, force: bool = False) -> ReleaseSyncLog | None:
         log.releases_created = report.releases_created
         log.releases_updated = report.releases_updated
         log.releases_deleted = report.releases_deleted
-        log.message = _format_report_message(report)
+        log.message = format_sync_report_message(report)
 
         if report.error:
             log.status = ReleaseSyncLog.Status.ERROR
@@ -98,14 +98,42 @@ def run_scheduled_sync(*, force: bool = False) -> ReleaseSyncLog | None:
     return log
 
 
-def _format_report_message(report: ItsSyncReport) -> str:
+def format_sync_report_message(report: ItsSyncReport) -> str:
     parts = [
         f'Конфигураций: {report.configurations_synced}/{len(report.details)}',
         f'релизов +{report.releases_created} ~{report.releases_updated}',
     ]
+    if report.releases_deleted:
+        parts.append(f'удалено {report.releases_deleted}')
     if report.configs_created or report.configs_updated:
         parts.append(f'справочник конфигураций +{report.configs_created} ~{report.configs_updated}')
-    return ', '.join(parts)
+
+    lines = [', '.join(parts)]
+    for detail in report.details:
+        if detail.error:
+            lines.append(f'✗ {detail.name}: {detail.error}')
+            continue
+        extra = f', удалено {detail.deleted}' if detail.deleted else ''
+        latest = detail.latest_version or '—'
+        lines.append(
+            f'✓ {detail.name}: актуальный {latest}, '
+            f'+{detail.created} ~{detail.updated}{extra} (на ИТС: {detail.total_fetched})',
+        )
+
+    skipped = OneCConfiguration.objects.filter(
+        is_published=True,
+        its_doc_id__isnull=True,
+    ).count()
+    if skipped:
+        lines.append(
+            f'⚠ {skipped} конфигураций в калькуляторе без привязки к ИТС — '
+            'их релизы не обновляются (БП 2.0, УТ 10 и др.).',
+        )
+    return '\n'.join(lines)
+
+
+def _format_report_message(report: ItsSyncReport) -> str:
+    return format_sync_report_message(report).split('\n', 1)[0]
 
 
 def _failed_configs_message(report: ItsSyncReport) -> str:

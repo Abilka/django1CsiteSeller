@@ -38,6 +38,7 @@ class ConfigurationSyncResult:
     updated: int = 0
     deleted: int = 0
     total_fetched: int = 0
+    latest_version: str = ''
     error: str = ''
 
 
@@ -163,6 +164,9 @@ def sync_releases_for_configuration(
             result.deleted = deleted
 
         _reindex_release_sort_orders(configuration)
+
+    latest = configuration.latest_release
+    result.latest_version = latest.version if latest else ''
 
     return result
 

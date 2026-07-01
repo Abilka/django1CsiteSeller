@@ -60,10 +60,11 @@ class Command(BaseCommand):
             )
 
         sync_configs = options['sync_configs'] or options['all'] or options['force']
+        prune = options['prune'] or options['all'] or options['force']
         report = sync_all_from_its(
             sync_configs=sync_configs,
             dry_run=False,
-            prune=options['prune'],
+            prune=prune,
         )
         self._print_report(report)
 
