@@ -69,7 +69,11 @@ def thanks(request):
 @require_http_methods(['GET', 'POST'])
 def update_calculator(request):
     settings = SiteSettings.load()
-    configurations = OneCConfiguration.objects.filter(is_published=True).prefetch_related('releases')
+    configurations = (
+        OneCConfiguration.objects.filter(is_published=True, releases__isnull=False)
+        .distinct()
+        .prefetch_related('releases')
+    )
 
     selected_config = None
     selected_version = ''

@@ -127,6 +127,8 @@ class Command(BaseCommand):
         ))
 
     def _print_report(self, report):
+        if report.error:
+            self.stdout.write(self.style.ERROR(f'Ошибка: {report.error}'))
         if report.configs_created or report.configs_updated:
             self.stdout.write(
                 f'Конфигурации freesc.ru: +{report.configs_created} / ~{report.configs_updated}',
