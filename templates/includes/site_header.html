@@ -1,4 +1,5 @@
 {% load static %}
+<a href="#main-content" class="skip-link">Перейти к содержимому</a>
 {% include 'includes/page_top_anchor.html' %}
 <header class="header">
     <div class="container header__inner">
@@ -41,7 +42,7 @@
             {% endif %}
             <a href="{% url 'landing:index' %}#contact" class="nav__link nav__link--cta">Получить оценку</a>
         </nav>
-        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false">
+        <button class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="nav">
             <span></span><span></span><span></span>
         </button>
     </div>

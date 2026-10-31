@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static humanize %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/blog.css' %}">{% endblock %}
 
 {% block seo_head %}
 {% include 'includes/seo_head.html' with page_title=page_title meta_description=page_description og_type='website' og_image=SEO_OG_IMAGE schema_items=schema_items %}
@@ -14,7 +15,7 @@
 {% block body %}
 {% include 'includes/site_header.html' with active_nav='blog' %}
 
-<main class="blog-page">
+<main id="main-content" tabindex="-1" class="blog-page">
     <section class="section blog-hero">
         <div class="container">
             <div class="section__head section__head--center">

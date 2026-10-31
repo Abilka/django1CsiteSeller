@@ -1,0 +1,83 @@
+/* ===== Variables ===== */
+:root {
+    /* palette */
+    --color-bg: #f8fafc;
+    --color-bg-alt: #f1f5f9;
+    --color-surface: #ffffff;
+    --color-dark: #0f172a;
+    --color-dark-2: #1e293b;
+    --color-navy: #1e3a5f;
+    --color-navy-2: #1a3354;
+    --color-heading: #0f172a;
+    --color-text: #334155;
+    --color-text-light: #475569;
+    --color-primary: #eab308;
+    --color-primary-dark: #ca8a04;
+    --color-primary-light: #fbbf24;
+    --color-primary-warm: #f59e0b;
+    --color-primary-text: #a16207;
+    --color-primary-glow: rgba(234, 179, 8, 0.25);
+    --color-accent: #0369a1;
+    --color-focus: #0369a1;
+    --color-white: #ffffff;
+    --color-border: #e2e8f0;
+    --color-success: #16a34a;
+    --color-success-bg: #f0fdf4;
+    --color-success-border: #86efac;
+    --color-danger: #b91c1c;
+    --color-danger-light: #ef4444;
+    --color-danger-bg: #fef2f2;
+    --color-danger-border: #fca5a5;
+    --color-code-bg: #1e293b;
+    --color-code-text: #e2e8f0;
+    --color-dot-green: #22c55e;
+
+    /* shape */
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.12);
+
+    /* spacing (4px base) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 96px;
+
+    /* type */
+    --font: 'Manrope', system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --header-h: 72px;
+    --transition: 0.25s ease;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-bg: #0b1220;
+        --color-bg-alt: #0f172a;
+        --color-surface: #131f35;
+        --color-heading: #f1f5f9;
+        --color-text: #cbd5e1;
+        --color-text-light: #94a3b8;
+        --color-primary-text: #fbbf24;
+        --color-primary-dark: #fbbf24;
+        --color-accent: #38bdf8;
+        --color-focus: #fbbf24;
+        --color-border: #26344d;
+        --color-success-bg: rgba(34, 197, 94, 0.12);
+        --color-success-border: rgba(34, 197, 94, 0.45);
+        --color-danger: #fca5a5;
+        --color-danger-bg: rgba(239, 68, 68, 0.12);
+        --color-danger-border: rgba(239, 68, 68, 0.45);
+        --shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+        color-scheme: dark;
+    }
+}

@@ -13,7 +13,7 @@
 {% block body %}
 {% include 'includes/site_header.html' %}
 
-<main>
+<main id="main-content" tabindex="-1">
     <section class="hero">
         <div class="hero__bg"></div>
         <div class="container hero__inner">
@@ -91,22 +91,22 @@
             </div>
             <div class="pain-grid">
                 <article class="pain-card">
-                    <div class="pain-card__icon">🐌</div>
+                    <div class="pain-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
                     <h3>База тормозит</h3>
                     <p>Отчёты грузятся минутами, пользователи ждут — теряется время и нервы.</p>
                 </article>
                 <article class="pain-card">
-                    <div class="pain-card__icon">📅</div>
+                    <div class="pain-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
                     <h3>Месяц не закрывается</h3>
                     <p>Ошибки в учёте, дубли контрагентов — закрытие периода срывается снова и снова.</p>
                 </article>
                 <article class="pain-card">
-                    <div class="pain-card__icon">🔗</div>
+                    <div class="pain-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></div>
                     <h3>Нет связи с маркетплейсами</h3>
                     <p>Ozon, Wildberries, Яндекс Маркет — заказы и остатки ведутся вручную.</p>
                 </article>
                 <article class="pain-card">
-                    <div class="pain-card__icon">⚠️</div>
+                    <div class="pain-card__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg></div>
                     <h3>Устаревшая версия</h3>
                     <p>1С не обновляли годами — отчёты не сходятся, новые формы не поддерживаются, а закрыть квартал уже некому.</p>
                 </article>
@@ -369,21 +369,21 @@
                 </div>
                 <div class="trust-visual">
                     <div class="trust-badge">
-                        <span class="trust-badge__icon">✓</span>
+                        <span class="trust-badge__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
                         <div>
                             <strong>ИТС обязателен</strong>
                             <p>Для установки и обновления конфигураций</p>
                         </div>
                     </div>
                     <div class="trust-badge">
-                        <span class="trust-badge__icon">⚙</span>
+                        <span class="trust-badge__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
                         <div>
                             <strong>Услуги, не ПО</strong>
                             <p>Настройка, разработка, интеграции</p>
                         </div>
                     </div>
                     <div class="trust-badge">
-                        <span class="trust-badge__icon">📋</span>
+                        <span class="trust-badge__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2M9 13h6M9 17h4"/></svg></span>
                         <div>
                             <strong>Смета заранее</strong>
                             <p>Стоимость и сроки — до начала работ</p>

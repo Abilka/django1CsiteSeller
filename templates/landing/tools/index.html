@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static seo_tags %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/tools.css' %}">{% endblock %}
 
 {% block seo_head %}
 {% include 'includes/seo_head.html' with page_title="Инструменты для разработчиков 1С — "|add:SITE_NAME meta_description="Онлайн-утилиты для администраторов, внедренцев и программистов 1С: проверка платформы, лента релизов, оценка задач и другие." og_type='website' og_image=SEO_OG_IMAGE %}
@@ -13,7 +14,7 @@
 {% block body %}
 {% include 'includes/site_header.html' with active_nav='tools' %}
 
-<main class="calc-page">
+<main id="main-content" tabindex="-1" class="calc-page">
     <section class="section calc-hero">
         <div class="container">
             <div class="section__head section__head--center">

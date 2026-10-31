@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static blog_extras %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/blog.css' %}">{% endblock %}
 
 {% block seo_head %}
 {% include 'includes/seo_head.html' with page_title=page_title meta_description=page_description og_type='article' og_image=og_image|default:SEO_OG_IMAGE article_published=post.published_at|date:'c' article_modified=post.updated_at|date:'c' schema_items=schema_items %}
@@ -8,7 +9,7 @@
 {% block body %}
 {% include 'includes/site_header.html' with active_nav='blog' %}
 
-<main class="blog-page">
+<main id="main-content" tabindex="-1" class="blog-page">
     <article class="section blog-article">
         <div class="container blog-article__container">
             <nav class="blog-breadcrumb" aria-label="Хлебные крошки">
